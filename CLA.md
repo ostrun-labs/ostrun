@@ -36,6 +36,3 @@ Votre Contribution est fournie **"telle quelle"**, sans garantie d'aucune sorte 
 
 L'acceptation de ce CLA se fait électroniquement, généralement via un commentaire automatique du bot CLA Assistant sur votre première pull request. Cette acceptation vaut pour toutes vos contributions futures au Projet, sauf révocation explicite de votre part (auquel cas les contributions déjà acceptées restent couvertes par ce CLA pour la période où il était en vigueur).
 
----
-
-*Ce CLA est un document simplifié pensé pour un projet individuel en phase de démarrage. Il ne constitue pas un avis juridique. Pour un usage à plus grande échelle ou dans un contexte professionnel, une relecture par un juriste est recommandée.*

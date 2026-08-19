@@ -43,7 +43,7 @@ Ostrun n'est **pas une plateforme partagée multi-tenant** : c'est un catalogue 
 
 ## Manifeste de service
 
-Chaque service déclare un `ostrun.manifest.json` (`provider`, `service`, `version`, nom/description catalogue, events publiés/consommés, variables d'environnement attendues, port(s) exposé(s), dépendances vers d'autres services, health check). C'est ce que l'UI de génération et la CI lisent pour construire le catalogue et le `docker-compose.yml`.
+Chaque service déclare un `ostrun.manifest.json` lu par l'UI de génération et la CI pour construire le catalogue et le `docker-compose.yml`. Spécification complète et exemples : [`/contracts/service-manifest.md`](./contracts/service-manifest.md).
 
 ## Structure du repo (cible)
 

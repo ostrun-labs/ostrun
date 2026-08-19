@@ -25,14 +25,7 @@ Avant de proposer un nouveau service, gardez en tête les règles non négociabl
 
 1. Choisissez un **provider** : un identifiant déclaratif (libre, ce n'est pas forcément votre handle GitHub) qui vous identifie comme contributeur/mainteneur. La CI vérifie automatiquement qu'il n'entre pas en collision avec un provider déjà utilisé par quelqu'un d'autre.
 2. Générez le squelette avec le template officiel (`dotnet new ostrun-service` ou équivalent selon votre stack — voir `/scaffold`). Votre service est rangé dans `/services/{provider}/{service}/` — un même provider peut héberger plusieurs services.
-3. Complétez le **manifeste de service** (`services/{provider}/{service}/ostrun.manifest.json`) :
-   - `provider`, `service`, `version`
-   - nom affiché et description (pour le catalogue)
-   - events publiés / consommés (référence aux fichiers `/contracts`)
-   - variables d'environnement attendues (nom, description, requis/optionnel, valeur par défaut)
-   - port(s) exposé(s)
-   - dépendances vers d'autres services (ex. si votre service nécessite qu'Auth soit aussi sélectionné)
-   - chemin/format du health check
+3. Complétez le **manifeste de service** (`services/{provider}/{service}/ostrun.manifest.json`) — spécification complète et exemples : [`/contracts/service-manifest.md`](./contracts/service-manifest.md).
 4. Assurez-vous que votre service expose `/health` et démarre seul via son propre `Dockerfile`.
 5. Ne mettez **aucun secret en dur** dans le code ou l'image : passez par des variables d'environnement, chargées via `.env` en local (fournissez un `.env.example` documentant les clés attendues, sans valeurs réelles).
 6. Ajoutez votre service au `docker-compose.yml` du projet.
