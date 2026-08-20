@@ -1,0 +1,10 @@
+{
+  "//": "Placeholder for standalone runs of the gateway skeleton. A generated app overwrites/mounts this file with real routes derived from its services' manifests.",
+  "Ostrun": {
+    "InternalPathPrefixes": []
+  },
+  "ReverseProxy": {
+    "Routes": {},
+    "Clusters": {}
+  }
+}
