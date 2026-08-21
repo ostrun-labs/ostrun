@@ -48,17 +48,18 @@ Chaque service déclare un `ostrun.manifest.json` lu par l'UI de génération et
 ## Structure du repo (cible)
 
 ```
-/gateway                  # YARP
+/gateway                  # Gabarit YARP copié tel quel dans chaque app générée
 /services
   /ostrun
-    /auth                 # Service Auth (C#) — JWT, register/login
+    /auth                 # ostrun.manifest.json (pointeur) — le code vit dans son propre repo séparé
 /contracts                # Schémas d'events versionnés, imbriqués par provider/service
 /scaffold                 # Template de génération de service pour contributeurs
-docker-compose.yml
 CONTRIBUTING.md
 CLA.md
 LICENSE
 ```
+
+> Ce repo ne contient aucun code de service ni de `docker-compose.yml` à sa racine : il n'est jamais buildé/lancé comme un tout. Il héberge le catalogue (manifestes-pointeurs), les schémas d'events et les gabarits que le générateur copie dans chaque app produite — le `docker-compose.yml`, lui, n'existe que dans une app générée.
 
 > Les services sont rangés par `{provider}/{service}` — y compris les services du cœur (sous le provider `ostrun`) — car un même type de service peut avoir plusieurs providers concurrents (ex. `billing` chez Stripe vs PayPal) avec des noms qui se recoupent.
 

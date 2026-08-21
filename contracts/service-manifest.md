@@ -19,13 +19,15 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 | `version` | string | oui | Version du service lui-même (semver, ex. `1.0.0`). |
 | `displayName` | string | oui | Nom affiché dans le catalogue (UI). |
 | `description` | string | oui | Description courte affichée dans le catalogue. |
-| `events.publishes` | string[] | oui (peut être vide) | Noms complets des events publiés (3 segments), référencent des fichiers dans `/contracts`. |
-| `events.consumes` | string[] | oui (peut être vide) | Noms complets des events consommés. |
+| `basePath` | string | optionnel (défaut `/`) | Préfixe interne sous lequel le service monte ses routes (ex. `/auth`). Sans ce champ, la gateway suppose que le service sert ses routes à la racine — si ce n'est pas le cas, elle strip le préfixe applicatif et casse le routing (`/auth/register` → `/register` côté service → 404). |
+| `events.published` | string[] | oui (peut être vide) | Noms complets des events publiés (3 segments), référencent des fichiers dans `/contracts`. |
+| `events.consumed` | object[] | oui (peut être vide) | Events consommés. Chaque entrée : `name` (nom complet de l'event, 3 segments), `path` (endpoint interne où le service reçoit cet event), `method` (verbe HTTP, ex. `POST`). Sans ce détail, l'URL d'abonnement d'un consommateur serait une convention non déclarée plutôt qu'un contrat — c'est aussi ce que la gateway utilise pour dériver les routes internes qu'elle bloque en 404. |
 | `env` | object[] | oui (peut être vide) | Variables d'environnement attendues. Chaque entrée : `name`, `description`, `required` (bool), `default` (optionnel). |
-| `port` | number | oui | Port exposé par le service dans son conteneur. |
+| `ports` | object[] | oui | Ports exposés par le service dans son conteneur. Chaque entrée : `containerPort` (number), `protocol` (optionnel, ex. `http`), `description` (optionnel). Un tableau plutôt qu'un seul port, pour les services qui exposent plus d'un port. |
+| `needsDb` | boolean | oui | Indique si le service nécessite sa propre base de données. Si `true`, le générateur provisionne un conteneur DB dédié dans le `docker-compose.yml` et ajoute les variables de connexion à `.env.example` — jamais une DB partagée entre services. |
 | `dependencies` | string[] | oui (peut être vide) | Services requis (`{provider}/{service}`) devant être sélectionnés en même temps que celui-ci. |
 | `healthCheck.path` | string | oui | Chemin de l'endpoint de health check (ex. `/health`). |
-| `healthCheck.format` | string | oui | Format de réponse attendu (ex. `plain-200`, `json-status`). |
+| `healthCheck.method` | string | oui | Méthode HTTP à utiliser pour l'appel de health check (ex. `GET`). |
 | `repository` | string (URL) | optionnel | Lien vers le repo Git du service — utilisé par le générateur pour cloner le code source (mode MVP "starter à bidouiller"). |
 | `registry` | string (URL/image) | optionnel | Référence de l'image Docker déjà buildée — utilisée pour le mode "prêt à l'emploi" (post-MVP), permet de sauter le clone et juste référencer l'image dans le `docker-compose.yml`. |
 
@@ -38,12 +40,13 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "version": "1.0.0",
   "displayName": "Auth",
   "description": "Comptes, sessions et JWT prêts à l'emploi.",
+  "basePath": "/auth",
   "events": {
-    "publishes": [
+    "published": [
       "Ostrun.Auth.UserRegistered",
       "Ostrun.Auth.UserLoggedIn"
     ],
-    "consumes": []
+    "consumed": []
   },
   "env": [
     {
@@ -58,11 +61,14 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
       "default": "60"
     }
   ],
-  "port": 8080,
+  "ports": [
+    { "containerPort": 8080, "protocol": "http", "description": "API HTTP" }
+  ],
+  "needsDb": true,
   "dependencies": [],
   "healthCheck": {
     "path": "/health",
-    "format": "plain-200"
+    "method": "GET"
   },
   "repository": "https://github.com/Thykimik/ostrun-auth-service",
   "registry": null
@@ -79,8 +85,14 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "displayName": "Mailer",
   "description": "Envoi d'emails déclenché par les events des autres services.",
   "events": {
-    "publishes": ["Ostrun.Mailer.EmailSent"],
-    "consumes": ["Ostrun.Auth.UserRegistered"]
+    "published": ["Ostrun.Mailer.EmailSent"],
+    "consumed": [
+      {
+        "name": "Ostrun.Auth.UserRegistered",
+        "path": "/events/ostrun.auth.user-registered",
+        "method": "POST"
+      }
+    ]
   },
   "env": [
     {
@@ -89,11 +101,14 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
       "required": true
     }
   ],
-  "port": 8081,
+  "ports": [
+    { "containerPort": 8081, "protocol": "http", "description": "API HTTP" }
+  ],
+  "needsDb": false,
   "dependencies": ["ostrun/auth"],
   "healthCheck": {
     "path": "/health",
-    "format": "plain-200"
+    "method": "GET"
   },
   "repository": "https://github.com/Thykimik/ostrun-mailer-service",
   "registry": null
@@ -101,5 +116,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 ```
 
 ## Statut
+
+Champs `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb` et `healthCheck.method` alignés (2026-08-21) sur l'implémentation réelle et les besoins du gateway, identifiés lors du spike du premier app généré — les manifestes livrés avant cette date utilisaient encore `events.publishes`/`events.consumes`, `port`, `needs_db` (snake_case) et `healthCheck.format`.
 
 Le schéma JSON formel (pour validation automatique par la CI) n'est pas encore écrit — à faire au moment du scaffold generator, comme pour la validation des events (`/contracts/README.md`).
