@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ostrun.dev/contracts/ostrun/mailer/EmailSent.v1.json",
+  "title": "Ostrun.Mailer.EmailSent",
+  "version": 1,
+  "description": "Publié par le service Mailer après l'envoi (ou la tentative d'envoi) d'un email déclenché par un event amont.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["userId", "email", "sourceEvent", "sentAtUtc"],
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identifiant de l'utilisateur destinataire."
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Adresse email destinataire."
+    },
+    "sourceEvent": {
+      "type": "string",
+      "description": "Nom complet de l'event amont ayant déclenché cet envoi (ex. Ostrun.Auth.UserRegistered)."
+    },
+    "sentAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Horodatage UTC de l'envoi."
+    }
+  }
+}

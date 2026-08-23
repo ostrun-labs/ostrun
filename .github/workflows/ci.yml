@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore gateway/OstrunGateway.csproj
+
+      - name: Build
+        run: dotnet build gateway/OstrunGateway.csproj --no-restore --configuration Release
+
+  validate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate contract file/title/version consistency
+        run: |
+          set -euo pipefail
+          status=0
+          shopt -s globstar nullglob
+          for f in contracts/**/*.v*.json; do
+            echo "Checking $f"
+
+            if ! jq empty "$f" 2>/dev/null; then
+              echo "::error file=$f::not valid JSON"
+              status=1
+              continue
+            fi
+
+            filename=$(basename "$f")
+            file_entity="${filename%%.v*}"
+            file_version="${filename##*.v}"
+            file_version="${file_version%.json}"
+
+            provider_dir=$(basename "$(dirname "$(dirname "$f")")")
+            service_dir=$(basename "$(dirname "$f")")
+
+            title=$(jq -r '.title // empty' "$f")
+            version=$(jq -r '.version // empty' "$f")
+
+            if [ -z "$title" ] || [ -z "$version" ]; then
+              echo "::error file=$f::missing title or version field"
+              status=1
+              continue
+            fi
+
+            IFS='.' read -r title_provider title_service title_entity <<< "$title"
+
+            if [ "$(echo "$title_provider" | tr '[:upper:]' '[:lower:]')" != "$provider_dir" ]; then
+              echo "::error file=$f::title provider '$title_provider' does not match directory '$provider_dir'"
+              status=1
+            fi
+
+            if [ "$(echo "$title_service" | tr '[:upper:]' '[:lower:]')" != "$service_dir" ]; then
+              echo "::error file=$f::title service '$title_service' does not match directory '$service_dir'"
+              status=1
+            fi
+
+            if [ "$title_entity" != "$file_entity" ]; then
+              echo "::error file=$f::title entity '$title_entity' does not match filename '$file_entity'"
+              status=1
+            fi
+
+            if [ "$file_version" != "$version" ]; then
+              echo "::error file=$f::filename version 'v$file_version' does not match schema version '$version'"
+              status=1
+            fi
+          done
+          exit $status

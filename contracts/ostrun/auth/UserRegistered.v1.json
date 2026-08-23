@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ostrun.dev/contracts/ostrun/auth/UserRegistered.v1.json",
+  "title": "Ostrun.Auth.UserRegistered",
+  "version": 1,
+  "description": "Publié par le service Auth quand un compte utilisateur est créé.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["userId", "email", "registeredAt"],
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identifiant du compte créé."
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Adresse email fournie à l'inscription."
+    },
+    "registeredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Horodatage UTC de la création du compte."
+    }
+  }
+}

@@ -21,7 +21,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 | `description` | string | oui | Description courte affichée dans le catalogue. |
 | `basePath` | string | optionnel (défaut `/`) | Préfixe interne sous lequel le service monte ses routes (ex. `/auth`). Sans ce champ, la gateway suppose que le service sert ses routes à la racine — si ce n'est pas le cas, elle strip le préfixe applicatif et casse le routing (`/auth/register` → `/register` côté service → 404). |
 | `events.published` | string[] | oui (peut être vide) | Noms complets des events publiés (3 segments), référencent des fichiers dans `/contracts`. |
-| `events.consumed` | object[] | oui (peut être vide) | Events consommés. Chaque entrée : `name` (nom complet de l'event, 3 segments), `path` (endpoint interne où le service reçoit cet event), `method` (verbe HTTP, ex. `POST`). Sans ce détail, l'URL d'abonnement d'un consommateur serait une convention non déclarée plutôt qu'un contrat — c'est aussi ce que la gateway utilise pour dériver les routes internes qu'elle bloque en 404. |
+| `events.consumed` | string[] | oui (peut être vide) | Noms complets des events consommés (3 segments). Le routage vers ce service se fait par abonnement à un exchange RabbitMQ nommé d'après l'event (pas d'endpoint HTTP à déclarer) — voir « Bus d'events » ci-dessous. |
 | `env` | object[] | oui (peut être vide) | Variables d'environnement attendues. Chaque entrée : `name`, `description`, `required` (bool), `default` (optionnel). |
 | `ports` | object[] | oui | Ports exposés par le service dans son conteneur. Chaque entrée : `containerPort` (number), `protocol` (optionnel, ex. `http`), `description` (optionnel). Un tableau plutôt qu'un seul port, pour les services qui exposent plus d'un port. |
 | `needsDb` | boolean | oui | Indique si le service nécessite sa propre base de données. Si `true`, le générateur provisionne un conteneur DB dédié dans le `docker-compose.yml` et ajoute les variables de connexion à `.env.example` — jamais une DB partagée entre services. |
@@ -86,13 +86,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "description": "Envoi d'emails déclenché par les events des autres services.",
   "events": {
     "published": ["Ostrun.Mailer.EmailSent"],
-    "consumed": [
-      {
-        "name": "Ostrun.Auth.UserRegistered",
-        "path": "/events/ostrun.auth.user-registered",
-        "method": "POST"
-      }
-    ]
+    "consumed": ["Ostrun.Auth.UserRegistered"]
   },
   "env": [
     {
@@ -115,8 +109,16 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 }
 ```
 
+## Bus d'events
+
+Les services publient/consomment via RabbitMQ + MassTransit. Le nom d'exchange est forcé au nom complet de l'event déclaré dans `/contracts` (`cfg.Message<T>(m => m.SetEntityName("Ostrun.Auth.UserRegistered"))` côté MassTransit), pas dérivé du nom du type CLR — chaque service définit son propre type de message local, aucun package de contrat partagé n'est requis, un futur service dans un autre langage suit la même convention de nommage d'exchange sans dépendance C#. Le générateur ajoute un conteneur `rabbitmq` unique à l'app dès qu'au moins un service sélectionné publie ou consomme un event.
+
+En l'absence de `RabbitMq__Host` en configuration, chaque service bascule sur le transport in-memory de MassTransit — aucun broker n'est requis pour lancer un service seul, dans son propre `docker-compose.yml` standalone.
+
 ## Statut
 
 Champs `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb` et `healthCheck.method` alignés (2026-08-21) sur l'implémentation réelle et les besoins du gateway, identifiés lors du spike du premier app généré — les manifestes livrés avant cette date utilisaient encore `events.publishes`/`events.consumes`, `port`, `needs_db` (snake_case) et `healthCheck.format`.
+
+`events.consumed` simplifié en tableau de strings (2026-08-24) : la livraison passe désormais par RabbitMQ/MassTransit au lieu d'un endpoint HTTP par consommateur, donc `path`/`method` n'ont plus de sens dans le manifeste.
 
 Le schéma JSON formel (pour validation automatique par la CI) n'est pas encore écrit — à faire au moment du scaffold generator, comme pour la validation des events (`/contracts/README.md`).
