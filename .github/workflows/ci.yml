@@ -23,6 +23,69 @@ jobs:
       - name: Build
         run: dotnet build gateway/OstrunGateway.csproj --no-restore --configuration Release
 
+  build-generator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore generator/OstrunGenerator.csproj
+
+      - name: Build
+        run: dotnet build generator/OstrunGenerator.csproj --no-restore --configuration Release
+
+  validate-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate catalog.json
+        run: |
+          set -euo pipefail
+          status=0
+
+          if ! jq empty catalog.json 2>/dev/null; then
+            echo "::error file=catalog.json::not valid JSON"
+            exit 1
+          fi
+
+          seen_refs=""
+          count=$(jq '.services | length' catalog.json)
+          for i in $(seq 0 $((count - 1))); do
+            ref=$(jq -r ".services[$i].ref // empty" catalog.json)
+            repository=$(jq -r ".services[$i].repository // empty" catalog.json)
+            rev=$(jq -r ".services[$i].rev // empty" catalog.json)
+
+            if [ -z "$ref" ] || [ -z "$repository" ] || [ -z "$rev" ]; then
+              echo "::error file=catalog.json::services[$i] is missing ref, repository, or rev"
+              status=1
+              continue
+            fi
+
+            if ! [[ "$ref" =~ ^[a-z0-9-]+/[a-z0-9-]+$ ]]; then
+              echo "::error file=catalog.json::services[$i].ref '$ref' must be lowercase '{provider}/{service}'"
+              status=1
+            fi
+
+            if [[ " $seen_refs " == *" $ref "* ]]; then
+              echo "::error file=catalog.json::duplicate ref '$ref'"
+              status=1
+            fi
+            seen_refs="$seen_refs $ref"
+
+            if ! [[ "$repository" =~ ^https:// ]]; then
+              echo "::error file=catalog.json::services[$i].repository '$repository' must be an https URL"
+              status=1
+            fi
+          done
+
+          exit $status
+
   validate-contracts:
     runs-on: ubuntu-latest
     steps:

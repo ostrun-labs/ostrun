@@ -8,14 +8,16 @@ Vitrine technique pensée pour démontrer une architecture distribuée prod-read
 
 ## Démarrage rapide
 
+Les services disponibles sont listés dans [`catalog.json`](./catalog.json) — pas besoin de connaître leur URL de repo, juste leur `ref` (`{provider}/{service}`) :
+
 ```bash
 cat > app.json <<'EOF'
 {
   "app": "my-app",
   "gatewayPort": 8080,
   "services": [
-    { "ref": "ostrun/auth",   "repository": "https://github.com/Thykimik/ostrun-auth-service",   "rev": "main" },
-    { "ref": "ostrun/mailer", "repository": "https://github.com/Thykimik/ostrun-mailer-service", "rev": "main" }
+    { "ref": "ostrun/auth" },
+    { "ref": "ostrun/mailer" }
   ]
 }
 EOF

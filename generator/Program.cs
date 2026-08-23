@@ -33,12 +33,17 @@ static void Run(string appJsonPath, string outputDir)
     var servicesDir = Path.Combine(outputDir, "services");
     Directory.CreateDirectory(servicesDir);
 
+    var repoRoot = FindRepoRoot();
+    var catalog = LoadCatalog(repoRoot, jsonOptions);
+
     var resolved = new List<ResolvedService>();
     foreach (var serviceRef in app.Services)
     {
+        var (repository, rev) = ResolveRepository(serviceRef, catalog);
+
         var cloneDir = Path.Combine(servicesDir, serviceRef.Ref);
-        Console.WriteLine($"Cloning {serviceRef.Ref} from {serviceRef.Repository} ({serviceRef.Rev})...");
-        CloneService(serviceRef, cloneDir);
+        Console.WriteLine($"Cloning {serviceRef.Ref} from {repository} ({rev})...");
+        CloneService(repository, rev, cloneDir);
 
         var manifestPath = Path.Combine(cloneDir, "ostrun.manifest.json");
         if (!File.Exists(manifestPath))
@@ -57,7 +62,7 @@ static void Run(string appJsonPath, string outputDir)
 
     var eventBusNeeded = resolved.Any(s => s.Manifest.Events.Published.Count > 0 || s.Manifest.Events.Consumed.Count > 0);
 
-    var gatewaySkeletonDir = FindGatewaySkeleton();
+    var gatewaySkeletonDir = Path.Combine(repoRoot, "gateway");
     Console.WriteLine($"Copying gateway skeleton from {gatewaySkeletonDir}...");
     CopyGatewaySkeleton(gatewaySkeletonDir, Path.Combine(outputDir, "gateway"));
 
@@ -78,14 +83,42 @@ static void Run(string appJsonPath, string outputDir)
     Console.WriteLine("  docker compose up --build -d");
 }
 
-static void CloneService(ServiceRef serviceRef, string targetDir)
+static Catalog LoadCatalog(string repoRoot, JsonSerializerOptions jsonOptions)
+{
+    var catalogPath = Path.Combine(repoRoot, "catalog.json");
+    if (!File.Exists(catalogPath))
+    {
+        return new Catalog();
+    }
+
+    return JsonSerializer.Deserialize<Catalog>(File.ReadAllText(catalogPath), jsonOptions)
+        ?? throw new GenerationException($"{catalogPath}: could not parse catalog.");
+}
+
+static (string Repository, string Rev) ResolveRepository(ServiceRef serviceRef, Catalog catalog)
+{
+    // app.json may fully specify repository/rev itself — that's the
+    // "starter" path for a personal/uncatalogued service (see
+    // brainstorm/to_think_about.md). Otherwise resolve from catalog.json.
+    if (serviceRef.Repository is not null)
+    {
+        return (serviceRef.Repository, serviceRef.Rev ?? "main");
+    }
+
+    var entry = catalog.Services.FirstOrDefault(e => e.Ref == serviceRef.Ref)
+        ?? throw new GenerationException($"{serviceRef.Ref}: not in catalog.json and no repository given in app.json. Either add it to the catalog or specify \"repository\" directly.");
+
+    return (entry.Repository, serviceRef.Rev ?? entry.Rev);
+}
+
+static void CloneService(string repository, string rev, string targetDir)
 {
     if (Directory.Exists(targetDir))
     {
         DeleteDirectory(targetDir);
     }
 
-    RunGit(["clone", "--depth", "1", "--branch", serviceRef.Rev, serviceRef.Repository, targetDir]);
+    RunGit(["clone", "--depth", "1", "--branch", rev, repository, targetDir]);
 }
 
 static void DeleteDirectory(string path)
@@ -120,23 +153,23 @@ static void RunGit(IEnumerable<string> arguments)
     }
 }
 
-static string FindGatewaySkeleton()
+static string FindRepoRoot()
 {
-    // ostrun/generator/bin/Debug/net8.0 -> walk up to the ostrun repo root,
-    // then look for its "gateway" sibling. Works whether run via
-    // `dotnet run` (cwd = generator/) or the built exe (cwd = bin output).
+    // ostrun/generator/bin/Debug/net8.0 -> walk up looking for catalog.json,
+    // which lives at the ostrun repo root next to gateway/. Works whether
+    // run via `dotnet run` (cwd = generator/) or the built exe (cwd = bin
+    // output).
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
     while (dir is not null)
     {
-        var candidate = Path.Combine(dir.FullName, "gateway", "OstrunGateway.csproj");
-        if (File.Exists(candidate))
+        if (File.Exists(Path.Combine(dir.FullName, "catalog.json")))
         {
-            return Path.Combine(dir.FullName, "gateway");
+            return dir.FullName;
         }
         dir = dir.Parent;
     }
 
-    throw new GenerationException("Could not locate the ostrun/gateway skeleton (OstrunGateway.csproj not found).");
+    throw new GenerationException("Could not locate the ostrun repo root (catalog.json not found in any parent directory).");
 }
 
 static void CopyGatewaySkeleton(string sourceDir, string targetDir)

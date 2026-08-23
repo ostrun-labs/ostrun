@@ -22,6 +22,30 @@ public sealed class ServiceRef
     [JsonPropertyName("ref")]
     public string Ref { get; init; } = "";
 
+    // Optional: a service already listed in catalog.json only needs `ref`.
+    // Set explicitly to point at a personal/uncatalogued repo instead (the
+    // "starter" path — see brainstorm/to_think_about.md).
+    [JsonPropertyName("repository")]
+    public string? Repository { get; init; }
+
+    [JsonPropertyName("rev")]
+    public string? Rev { get; init; }
+}
+
+// ostrun/catalog.json — a thin index of official services (pointers only).
+// Display info, events, env vars etc. stay in each service's own manifest,
+// fetched at generation time, so the catalog never drifts from it.
+public sealed class Catalog
+{
+    [JsonPropertyName("services")]
+    public List<CatalogEntry> Services { get; init; } = [];
+}
+
+public sealed class CatalogEntry
+{
+    [JsonPropertyName("ref")]
+    public string Ref { get; init; } = "";
+
     [JsonPropertyName("repository")]
     public string Repository { get; init; } = "";
 

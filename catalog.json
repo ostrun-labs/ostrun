@@ -1,0 +1,15 @@
+{
+  "//": "GENERATED index of officially catalogued services — pointers only (repository + default rev). Display info, events, env vars etc. live in each service's own ostrun.manifest.json, fetched at generation time. See contracts/service-manifest.md.",
+  "services": [
+    {
+      "ref": "ostrun/auth",
+      "repository": "https://github.com/Thykimik/ostrun-auth-service",
+      "rev": "main"
+    },
+    {
+      "ref": "ostrun/mailer",
+      "repository": "https://github.com/Thykimik/ostrun-mailer-service",
+      "rev": "main"
+    }
+  ]
+}
