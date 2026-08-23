@@ -123,23 +123,17 @@ static void RunGit(IEnumerable<string> arguments)
 static string FindGatewaySkeleton()
 {
     // ostrun/generator/bin/Debug/net8.0 -> walk up to the ostrun repo root,
-    // then into gateway/. Works whether run via `dotnet run` (cwd =
-    // generator/) or the built exe (cwd = bin output).
+    // then look for its "gateway" sibling. Works whether run via
+    // `dotnet run` (cwd = generator/) or the built exe (cwd = bin output).
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
-    while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "OstrunGateway.csproj")))
+    while (dir is not null)
     {
+        var candidate = Path.Combine(dir.FullName, "gateway", "OstrunGateway.csproj");
+        if (File.Exists(candidate))
+        {
+            return Path.Combine(dir.FullName, "gateway");
+        }
         dir = dir.Parent;
-    }
-
-    if (dir is not null)
-    {
-        return dir.FullName;
-    }
-
-    var fromCwd = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "gateway"));
-    if (File.Exists(Path.Combine(fromCwd, "OstrunGateway.csproj")))
-    {
-        return fromCwd;
     }
 
     throw new GenerationException("Could not locate the ostrun/gateway skeleton (OstrunGateway.csproj not found).");
