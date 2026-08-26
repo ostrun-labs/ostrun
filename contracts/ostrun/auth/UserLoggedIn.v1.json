@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ostrun.dev/contracts/ostrun/auth/UserLoggedIn.v1.json",
+  "title": "Ostrun.Auth.UserLoggedIn",
+  "version": 1,
+  "description": "Publié par le service Auth à chaque connexion réussie.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["userId", "email", "loggedInAt"],
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identifiant du compte connecté."
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Adresse email du compte connecté."
+    },
+    "loggedInAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Horodatage UTC de la connexion."
+    }
+  }
+}

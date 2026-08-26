@@ -1,63 +1,58 @@
-# Contribuer à Ostrun
+# Contributing to Ostrun
 
-Merci de l'intérêt porté à Ostrun ! Ce projet est pensé dès le départ pour accueillir des contributions externes, avec quelques règles pour que ça reste cohérent et maintenable.
+Thanks for your interest in Ostrun! This project is designed from the start to accept external contributions, with a few rules to keep it coherent and maintainable.
 
-## Avant de contribuer
+## Before contributing
 
-### 1. CLA (Contributor License Agreement)
+### Project license
 
-Toute contribution (code, doc, config) nécessite l'acceptation du [CLA](./CLA.md). Sur votre première pull request, un bot vous guidera automatiquement pour l'accepter en un clic — rien à faire en amont.
+Ostrun is distributed under the **Apache-2.0** license. By contributing, you agree that your contribution will be distributed under this license.
 
-### 2. Licence du projet
+## Architecture principles to respect
 
-Ostrun est distribué sous licence **Apache-2.0**. En contribuant, vous acceptez que votre contribution soit distribuée sous cette licence (voir le CLA pour le détail).
+Before proposing a new service, keep the project's non-negotiable rules in mind:
 
-## Principes d'architecture à respecter
+- **Strict independence**: your service has its own database and schema. Never a shared DB, never a direct call into another service's code.
+- **Communication only via API (synchronous) or events (asynchronous)**.
+- **Polyglot allowed**: write your service in whatever language you choose (Node, Python, etc.), as long as it honors the contract (API + events) and provides a `Dockerfile` and a `/health` endpoint.
+- **No runtime coupling**: no dependency on a "central" service at startup, aside from the event bus and the gateway.
 
-Avant de proposer un nouveau service, gardez en tête les règles non négociables du projet :
+## Adding a new service
 
-- **Indépendance stricte** : votre service a sa propre base de données/son propre schéma. Jamais de DB partagée, jamais d'appel direct au code d'un autre service.
-- **Communication uniquement via API (synchrone) ou events (asynchrone)**.
-- **Polyglotte autorisé** : écrivez votre service dans le langage de votre choix (Node, Python, etc.), tant qu'il respecte le contrat (API + events) et fournit un `Dockerfile` + un endpoint `/health`.
-- **Pas de couplage runtime** : aucune dépendance à un service "central" au démarrage, en dehors du bus d'events et de la gateway.
+1. Choose a **provider**: a declarative identifier (free-form, not necessarily your GitHub handle) that identifies you as a contributor or maintainer. CI automatically checks it doesn't collide with a provider already used by someone else.
+2. Generate the skeleton with the official template (`dotnet new ostrun-service` or the equivalent for your stack, see `/scaffold`). Your service goes under `/services/{provider}/{service}/`. A single provider can host multiple services.
+3. Fill in the **service manifest** (`services/{provider}/{service}/ostrun.manifest.json`). Full spec and examples: [`/contracts/service-manifest.md`](./contracts/service-manifest.md).
+4. Make sure your service exposes `/health` and starts standalone via its own `Dockerfile`.
+5. **No hardcoded secrets** in code or the image. Use environment variables, loaded via `.env` locally, and provide a `.env.example` documenting the expected keys with no real values.
+6. Add your service to the project's `docker-compose.yml`.
 
-## Ajouter un nouveau service
+For now, adding a service to the **official catalog** (the one exposed in the generation UI) is reviewed case by case by the project maintainer. This will be revisited once the MVP is public.
 
-1. Choisissez un **provider** : un identifiant déclaratif (libre, ce n'est pas forcément votre handle GitHub) qui vous identifie comme contributeur/mainteneur. La CI vérifie automatiquement qu'il n'entre pas en collision avec un provider déjà utilisé par quelqu'un d'autre.
-2. Générez le squelette avec le template officiel (`dotnet new ostrun-service` ou équivalent selon votre stack — voir `/scaffold`). Votre service est rangé dans `/services/{provider}/{service}/` — un même provider peut héberger plusieurs services.
-3. Complétez le **manifeste de service** (`services/{provider}/{service}/ostrun.manifest.json`) — spécification complète et exemples : [`/contracts/service-manifest.md`](./contracts/service-manifest.md).
-4. Assurez-vous que votre service expose `/health` et démarre seul via son propre `Dockerfile`.
-5. Ne mettez **aucun secret en dur** dans le code ou l'image : passez par des variables d'environnement, chargées via `.env` en local (fournissez un `.env.example` documentant les clés attendues, sans valeurs réelles).
-6. Ajoutez votre service au `docker-compose.yml` du projet.
+## Adding or changing an event
 
-Pour le moment, l'ajout d'un service au **catalogue officiel** (celui exposé dans l'UI de génération) est validé au cas par cas par le mainteneur du projet — ce point sera revu une fois le MVP public.
+This is the most sensitive part of the project. Please follow these rules to the letter:
 
-## Ajouter ou modifier un event
+1. **Strict 3-segment naming convention**: `{Provider}.{Service}.{Entity}{PastParticiple}`, e.g. `Ostrun.Auth.UserRegistered`. `Provider` avoids collisions between two same-named services written by different contributors.
+2. The last segment ends in a **past participle** describing a completed fact (`UserRegistered`, never `CreateUser`). Validation stays **loose**: no closed list of verbs, since the service catalog is meant to grow and a strict list would require a PR for every new business verb.
+3. Any change to an existing event creates a **new version** (`v2`, etc.) rather than breaking the existing one.
+4. The schema (JSON Schema or Protobuf) goes in `/contracts/{provider}/{service}/{Entity}{PastParticiple}.v1.json`, versioned.
+5. Your pull request must pass **contract validation CI**: name uniqueness, consistency between the `provider` declared in the manifest and the one used in published events, schema validity. A PR that fails this validation will not be merged.
 
-C'est le point le plus sensible du projet — merci de suivre ces règles à la lettre :
+There is no central event governance service. Consistency happens through PR review, not through a single execution point.
 
-1. **Convention de nommage stricte à 3 segments** : `{Provider}.{Service}.{Entité}{VerbePassé}` — ex. `Ostrun.Auth.UserRegistered`. Le `Provider` évite les collisions entre deux services de même nom écrits par des contributeurs différents.
-2. Le dernier segment se termine par un **participe passé** décrivant un fait accompli (`UserRegistered`, jamais `CreateUser`). La validation reste **souple** (pas de liste fermée de verbes) : le catalogue de services étant amené à grandir, une liste stricte imposerait une PR à chaque nouveau verbe métier.
-3. Toute évolution d'un event existant crée une **nouvelle version** (`v2`, etc.) plutôt que de casser l'existante.
-4. Le schéma (JSON Schema / Protobuf) va dans `/contracts/{provider}/{service}/{Entité}{VerbePassé}.v1.json`, versionné.
-5. Votre pull request doit passer la **CI de validation des contrats** : unicité du nom, cohérence entre le `provider` déclaré dans le manifeste et celui utilisé dans les events publiés, validité du schéma. Une PR qui ne passe pas cette validation ne sera pas mergée.
+> Full validation spec (regex, verb heuristic, test cases): see [`/contracts/README.md`](./contracts/README.md).
 
-Il n'y a **pas de service central de gouvernance des events** — la cohérence se fait via revue de PR, pas via un point d'exécution unique.
+## Pull request process
 
-> Spécification complète de validation (regex, heuristique sur les verbes, cas de test) : voir [`/contracts/README.md`](./contracts/README.md).
+1. Fork the repo, create a branch from `main`.
+2. Make sure tests and CI pass (build, tests, contract validation if you touch `/contracts`).
+3. Clearly describe in the PR what the service or change does, and any events published or consumed.
+4. A maintainer reviews and merges.
 
-## Process de pull request
+## Reporting a bug or proposing an idea
 
-1. Forkez le repo, créez une branche depuis `main`.
-2. Assurez-vous que les tests et la CI passent (build, tests, validation des contrats si vous touchez à `/contracts`).
-3. Décrivez clairement dans la PR : ce que fait le service/changement, les events publiés/consommés le cas échéant.
-4. Acceptez le CLA si c'est votre première contribution.
-5. Un mainteneur relit et merge.
+Open an issue with as much context as possible: expected vs. observed behavior, logs, reproduction steps. For an architecture proposal or a new service, a discussion in an issue before the PR is welcome to avoid wasted work.
 
-## Signaler un bug ou proposer une idée
+## Maintenance and turnaround
 
-Ouvrez une issue avec un maximum de contexte (comportement attendu vs observé, logs, étapes de reproduction). Pour une proposition d'architecture ou de nouveau service, une discussion en issue avant la PR est bienvenue pour éviter le travail perdu.
-
-## Maintenance et délais
-
-Ce projet est maintenu sur mon temps personnel — les retours sur les issues/PR peuvent prendre un peu de temps. Merci de votre patience.
+This project is maintained in my personal time, so feedback on issues and PRs may take a while. Thanks for your patience.
