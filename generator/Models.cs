@@ -24,7 +24,7 @@ public sealed class ServiceRef
 
     // Optional: a service already listed in catalog.json only needs `ref`.
     // Set explicitly to point at a personal/uncatalogued repo instead (the
-    // "starter" path — see brainstorm/to_think_about.md).
+    // "starter" path).
     [JsonPropertyName("repository")]
     public string? Repository { get; init; }
 

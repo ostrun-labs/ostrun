@@ -1,8 +1,8 @@
 # ostrun/generator
 
-Script MVP qui automatise ce que le spike (`brainstorm/first-app-spike-plan.md`) faisait à la main : cloner les services sélectionnés, valider leurs manifestes, et générer `docker-compose.yml`, `gateway/routes.generated.json` et `.env.example`.
+MVP script that automates what an earlier manual spike did by hand: clone the selected services, validate their manifests, and generate `docker-compose.yml`, `gateway/routes.generated.json`, and `.env.example`.
 
-Pas un outil packagé (CLI/UI web = post-MVP) — un projet console qu'on lance avec `dotnet run`.
+Not a packaged tool (CLI/web UI is post-MVP), just a console project you run with `dotnet run`.
 
 ## Usage
 
@@ -21,25 +21,25 @@ EOF
 dotnet run --project ostrun/generator -- app.json ./my-app
 
 cd my-app
-cp .env.example .env   # remplir tous les "change-me"
+cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
-`ref` seul suffit pour un service listé dans [`../catalog.json`](../catalog.json) — le générateur y résout `repository`/`rev`. Pour un service perso pas encore catalogué, donner `repository` (et optionnellement `rev`) directement dans l'entrée `app.json`, ça court-circuite le lookup catalogue.
+A bare `ref` is enough for a service listed in [`../catalog.json`](../catalog.json): the generator resolves `repository`/`rev` from there. For a personal service not yet catalogued, giving `repository` (and optionally `rev`) directly in the `app.json` entry skips the catalog lookup.
 
-## Ce qu'il fait
+## What it does
 
-1. Résout chaque `ref` d'`app.json` : `repository`/`rev` donnés explicitement, sinon lookup dans `catalog.json`.
-2. Clone chaque service (`git clone --depth 1`) dans `services/{ref}/`.
-3. Lit et valide chaque `ostrun.manifest.json` (un seul port HTTP, `healthCheck.method == GET`, dépendances résolues dans la sélection) — échoue bruyamment plutôt que de générer une app cassée.
-4. Copie le squelette gateway (`ostrun/gateway/`) tel quel.
-5. Génère `docker-compose.yml` : un service `{key}-api` par service sélectionné, un `{key}-db` si `needsDb`, un `rabbitmq` si au moins un service publie/consomme des events. Aucun port host publié à part la gateway.
-6. Génère `gateway/routes.generated.json` : une route catch-all + une route santé dédiée par service (le health check est toujours à un chemin absolu sur le conteneur, indépendant de `basePath`).
-7. Génère `.env.example` : union des `env[]` de chaque manifeste, préfixée par service, en excluant tout ce qui est dérivable (connection strings, `ASPNETCORE_URLS`, config RabbitMQ).
+1. Resolves each `ref` in `app.json`: explicit `repository`/`rev` if given, otherwise a lookup in `catalog.json`.
+2. Clones each service (`git clone --depth 1`) into `services/{ref}/`.
+3. Reads and validates each `ostrun.manifest.json` (single HTTP port, `healthCheck.method == GET`, dependencies resolved within the selection). Fails loudly rather than generating a broken app.
+4. Copies the gateway skeleton (`ostrun/gateway/`) as-is.
+5. Generates `docker-compose.yml`: one `{key}-api` service per selected service, a `{key}-db` if `needsDb`, a `rabbitmq` if at least one service publishes or consumes events. No host port published besides the gateway's.
+6. Generates `gateway/routes.generated.json`: a catch-all route plus a dedicated health route per service (the health check always lives at an absolute path on the container, independent of `basePath`).
+7. Generates `.env.example`: the union of each manifest's `env[]`, prefixed per service, excluding anything derivable (connection strings, `ASPNETCORE_URLS`, RabbitMQ config).
 
-## Limites connues (MVP)
+## Known limits (MVP)
 
-- Un seul port HTTP par service (`ports[]` avec plus d'une entrée fait échouer la validation).
-- Pas de mode "prêt à l'emploi" (`registry`) — clone systématique depuis `repository`.
-- Pas de résolution transitive de dépendances : si `app.json` sélectionne Mailer sans Auth, la validation échoue plutôt que d'ajouter Auth automatiquement.
-- `catalog.json` est maintenu à la main pour l'instant — pas de CI qui vérifie qu'il reste synchronisé avec les manifestes réels des services listés (juste sa propre validité structurelle, voir `.github/workflows/ci.yml`).
+- One HTTP port per service (a `ports[]` with more than one entry fails validation).
+- No "ready-to-use" mode (`registry`): the generator always clones from `repository`.
+- No transitive dependency resolution: if `app.json` selects Mailer without Auth, validation fails instead of adding Auth automatically.
+- `catalog.json` is hand-maintained for now. No CI checks that it stays in sync with the real manifests of the services it lists, only its own structural validity (see `.github/workflows/ci.yml`).

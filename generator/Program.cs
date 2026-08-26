@@ -97,9 +97,9 @@ static Catalog LoadCatalog(string repoRoot, JsonSerializerOptions jsonOptions)
 
 static (string Repository, string Rev) ResolveRepository(ServiceRef serviceRef, Catalog catalog)
 {
-    // app.json may fully specify repository/rev itself — that's the
-    // "starter" path for a personal/uncatalogued service (see
-    // brainstorm/to_think_about.md). Otherwise resolve from catalog.json.
+    // app.json may fully specify repository/rev itself. That's the
+    // "starter" path for a personal/uncatalogued service. Otherwise
+    // resolve from catalog.json.
     if (serviceRef.Repository is not null)
     {
         return (serviceRef.Repository, serviceRef.Rev ?? "main");
