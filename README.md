@@ -1,14 +1,14 @@
 # Ostrun
 
-**Catalogue de services + générateur one-shot** pour bâtir des backends microservices : tu choisis des services, tu obtiens un repo indépendant prêt à cloner — aucune synchronisation ni dépendance runtime à Ostrun après génération.
+**Service catalog + one-shot generator** for building microservice backends: pick services, get an independent repo ready to clone — no sync, no runtime dependency on Ostrun after generation.
 
-Vitrine technique pensée pour démontrer une architecture distribuée prod-ready : découplage par events, indépendance stricte des services, gouvernance pensée pour accueillir du code externe dès le départ.
+Technical showcase built to demonstrate a production-shaped distributed architecture: event-driven decoupling, strict service independence, governance designed from the start to accept external code.
 
-> Repo privé pour l'instant. MVP en cours de finalisation.
+> Private repo for now. MVP being finalized.
 
-## Démarrage rapide
+## Quickstart
 
-Les services disponibles sont listés dans [`catalog.json`](./catalog.json) — pas besoin de connaître leur URL de repo, juste leur `ref` (`{provider}/{service}`) :
+Available services are listed in [`catalog.json`](./catalog.json) — no need to know their repo URL, just their `ref` (`{provider}/{service}`):
 
 ```bash
 cat > app.json <<'EOF'
@@ -25,37 +25,37 @@ EOF
 dotnet run --project generator -- app.json ./my-app
 
 cd my-app
-cp .env.example .env   # remplir tous les "change-me"
+cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
-Détail de ce que fait le générateur et ses limites connues : [`generator/README.md`](./generator/README.md).
+What the generator does and its known limits: [`generator/README.md`](./generator/README.md).
 
-## Principes
+## Principles
 
-- **Cœur en C#/.NET** (gateway YARP, service Auth de référence) ; les services contribués peuvent être écrits dans n'importe quel langage tant qu'ils respectent le contrat (API + events).
-- **Indépendance stricte de chaque service** : sa propre base de données, son propre repo + `Dockerfile`, communication uniquement via API (synchrone) ou events (asynchrone) — jamais d'appel direct au code d'un autre service, jamais de DB partagée.
-- **Bus d'events** (RabbitMQ + MassTransit) comme colonne vertébrale inter-services. Pas de service de gouvernance runtime ("EventManager") — la cohérence se fait à la conception, via PR + CI.
-- **Secrets** via `.env` (gitignored) + `.env.example` committé — jamais en dur.
+- **Core in C#/.NET** (YARP gateway, reference Auth service); contributed services can be written in any language as long as they honor the contract (API + events).
+- **Strict independence per service**: its own database, its own repo + `Dockerfile`, communication only via API (synchronous) or events (asynchronous) — never a direct call into another service's code, never a shared DB.
+- **Event bus** (RabbitMQ + MassTransit) as the inter-service backbone. No runtime governance service ("EventManager") — consistency happens at design time, via PR + CI.
+- **Secrets** via `.env` (gitignored) + a committed `.env.example` — never hardcoded.
 
-## Structure du repo
+## Repo structure
 
 ```
-/gateway      # Squelette YARP, copié tel quel dans chaque app générée
-/generator    # Script qui clone les services sélectionnés et assemble l'app
-/contracts    # Schémas d'events versionnés + spécification du manifeste de service
+/gateway      # YARP skeleton, copied as-is into every generated app
+/generator    # Script that clones selected services and assembles the app
+/contracts    # Versioned event schemas + service manifest specification
 CONTRIBUTING.md, LICENSE
 ```
 
-Ce repo ne contient **aucun code de service** : chaque service catalogué vit dans son propre repo indépendant, par ex. [`ostrun-auth-service`](https://github.com/Thykimik/ostrun-auth-service) et [`ostrun-mailer-service`](https://github.com/Thykimik/ostrun-mailer-service).
+This repo contains **no service code**: each cataloged service lives in its own independent repo, e.g. [`ostrun-auth-service`](https://github.com/Thykimik/ostrun-auth-service) and [`ostrun-mailer-service`](https://github.com/Thykimik/ostrun-mailer-service).
 
 ## Documentation
 
-- [`contracts/README.md`](./contracts/README.md) — gouvernance et convention de nommage des events
-- [`contracts/service-manifest.md`](./contracts/service-manifest.md) — spécification du manifeste de service
-- [`generator/README.md`](./generator/README.md) — fonctionnement du générateur, limites connues du MVP
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — process de contribution
+- [`contracts/README.md`](./contracts/README.md) — event governance and naming convention
+- [`contracts/service-manifest.md`](./contracts/service-manifest.md) — service manifest specification
+- [`generator/README.md`](./generator/README.md) — how the generator works, known MVP limits
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution process
 
-## Licence
+## License
 
-Distribué sous licence [Apache-2.0](./LICENSE).
+Distributed under the [Apache-2.0](./LICENSE) license.
