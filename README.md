@@ -44,7 +44,7 @@ Détail de ce que fait le générateur et ses limites connues : [`generator/READ
 /gateway      # Squelette YARP, copié tel quel dans chaque app générée
 /generator    # Script qui clone les services sélectionnés et assemble l'app
 /contracts    # Schémas d'events versionnés + spécification du manifeste de service
-CONTRIBUTING.md, CLA.md, LICENSE
+CONTRIBUTING.md, LICENSE
 ```
 
 Ce repo ne contient **aucun code de service** : chaque service catalogué vit dans son propre repo indépendant, par ex. [`ostrun-auth-service`](https://github.com/Thykimik/ostrun-auth-service) et [`ostrun-mailer-service`](https://github.com/Thykimik/ostrun-mailer-service).
@@ -54,7 +54,7 @@ Ce repo ne contient **aucun code de service** : chaque service catalogué vit da
 - [`contracts/README.md`](./contracts/README.md) — gouvernance et convention de nommage des events
 - [`contracts/service-manifest.md`](./contracts/service-manifest.md) — spécification du manifeste de service
 - [`generator/README.md`](./generator/README.md) — fonctionnement du générateur, limites connues du MVP
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — process de contribution ; [`CLA.md`](./CLA.md) à accepter sur la première PR
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — process de contribution
 
 ## Licence
 

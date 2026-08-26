@@ -4,13 +4,9 @@ Merci de l'intérêt porté à Ostrun ! Ce projet est pensé dès le départ pou
 
 ## Avant de contribuer
 
-### 1. CLA (Contributor License Agreement)
+### Licence du projet
 
-Toute contribution (code, doc, config) nécessite l'acceptation du [CLA](./CLA.md). Sur votre première pull request, un bot vous guidera automatiquement pour l'accepter en un clic — rien à faire en amont.
-
-### 2. Licence du projet
-
-Ostrun est distribué sous licence **Apache-2.0**. En contribuant, vous acceptez que votre contribution soit distribuée sous cette licence (voir le CLA pour le détail).
+Ostrun est distribué sous licence **Apache-2.0**. En contribuant, vous acceptez que votre contribution soit distribuée sous cette licence.
 
 ## Principes d'architecture à respecter
 
@@ -51,8 +47,7 @@ Il n'y a **pas de service central de gouvernance des events** — la cohérence 
 1. Forkez le repo, créez une branche depuis `main`.
 2. Assurez-vous que les tests et la CI passent (build, tests, validation des contrats si vous touchez à `/contracts`).
 3. Décrivez clairement dans la PR : ce que fait le service/changement, les events publiés/consommés le cas échéant.
-4. Acceptez le CLA si c'est votre première contribution.
-5. Un mainteneur relit et merge.
+4. Un mainteneur relit et merge.
 
 ## Signaler un bug ou proposer une idée
 
