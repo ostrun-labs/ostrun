@@ -1,105 +1,105 @@
-# Convention de nommage des events — spécification de validation CI
+# Event naming convention, CI validation specification
 
-Ce document est la **spécification de référence** pour la validation des events Ostrun. Il ne contient pas encore de code : c'est le contrat que le futur script de validation CI (à écrire au moment du scaffold generator) devra implémenter, avec ses cas de test.
+This document is the **reference specification** for validating Ostrun events. It doesn't contain code yet: it's the contract the future CI validation script (to be written when the generator is scaffolded) will need to implement, along with its test cases.
 
-## 1. Format d'un nom d'event
+## 1. Event name format
 
 ```
-{Provider}.{Service}.{Entité}{VerbePassé}
+{Provider}.{Service}.{Entity}{PastParticiple}
 ```
 
-Exemple : `Ostrun.Auth.UserRegistered`, `Acme.Billing.InvoiceCreated`
+Example: `Ostrun.Auth.UserRegistered`, `Acme.Billing.InvoiceCreated`
 
-## 2. Règles de validation, par niveau de sévérité
+## 2. Validation rules, by severity level
 
-### 2.1 Structure — hard fail (bloque la PR)
+### 2.1 Structure (hard fail, blocks the PR)
 
-Le nom doit être 3 segments PascalCase séparés par des points :
+The name must be 3 PascalCase segments separated by dots:
 
 ```regex
 ^[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*$
 ```
 
-- Chaque segment commence par une majuscule, suivi de lettres/chiffres uniquement (pas de `_`, `-`, espace)
-- Exactement 2 points, donc exactement 3 segments — ni 2 (ancienne convention), ni 4+
+- Each segment starts with an uppercase letter, followed by letters/digits only (no `_`, `-`, spaces)
+- Exactly 2 dots, so exactly 3 segments: not 2 (old convention), not 4+
 
-### 2.2 Cohérence provider — hard fail
+### 2.2 Provider consistency (hard fail)
 
-- Le segment `Provider` de l'event doit être **identique** (au caractère près) au champ `provider` déclaré dans le manifeste (`ostrun.manifest.json`) du service qui publie cet event.
-- Un service ne peut pas publier un event sous le nom d'un autre provider.
+- The event's `Provider` segment must be **identical** (character for character) to the `provider` field declared in the manifest (`ostrun.manifest.json`) of the service publishing this event.
+- A service cannot publish an event under another provider's name.
 
-### 2.3 Collision de provider — hard fail (au niveau du catalogue, pas de l'event)
+### 2.3 Provider collision (hard fail, at the catalog level, not the event level)
 
-- Deux services différents ne peuvent pas déclarer le même `provider` (comparaison **insensible à la casse**) s'ils ne partagent pas le même mainteneur.
-- Vérification : à l'ajout d'un service, comparer son `provider` à tous les `provider` déjà présents dans `/services/**/ostrun.manifest.json`. Collision insensible à la casse (`Acme` et `ACME` entrent en collision).
-- Le mainteneur du repo tranche manuellement en cas de collision détectée (pas d'auto-résolution).
+- Two different services cannot declare the same `provider` (**case-insensitive** comparison) unless they share the same maintainer.
+- Check: when a service is added, compare its `provider` against every `provider` already present in `/services/**/ostrun.manifest.json`. Case-insensitive collision (`Acme` and `ACME` collide).
+- The repo maintainer decides manually when a collision is detected (no auto-resolution).
 
-### 2.4 Segment `VerbePassé` — validation souple (warning, ne bloque pas)
+### 2.4 `PastParticiple` segment (loose validation, warning, doesn't block)
 
-Pas de liste fermée de verbes (le catalogue est amené à grandir — une liste stricte imposerait une PR à chaque nouveau verbe métier). La CI applique une heuristique en 2 temps sur le dernier segment (`{Entité}{VerbePassé}`) :
+No closed list of verbs: the catalog is meant to grow, and a strict list would require a PR for every new business verb. CI applies a two-step heuristic to the last segment (`{Entity}{PastParticiple}`):
 
-1. **Se termine par `ed`** → considéré comme un participe passé régulier, silencieux (cas très majoritaire : `Registered`, `Created`, `Updated`, `Deleted`, `Failed`, `Renewed`...)
-2. **Sinon, vérifié contre une liste ouverte** de participes passés irréguliers, stockée dans `/contracts/_verbs/irregular-participles.txt` (un mot par ligne, PR-extensible sans toucher au script de validation) — ex. `Sent`, `Paid`, `Done`, `Given`, `Taken`, `Written`, `Broken`, `Chosen`, `Held`, `Built`, `Sold`, `Bought`, `Caught`, `Brought`, `Taught`, `Found`, `Left`, `Lost`, `Won`, `Gone`, `Made`
-3. **Sinon** → la CI poste un **commentaire d'avertissement** sur la PR ("le dernier segment ne ressemble pas à un participe passé connu, merci de confirmer") mais **ne bloque pas** le merge
+1. **Ends in `ed`**: treated as a regular past participle, silent (the vast majority of cases: `Registered`, `Created`, `Updated`, `Deleted`, `Failed`, `Renewed`...)
+2. **Otherwise, checked against an open list** of irregular past participles, stored in `/contracts/_verbs/irregular-participles.txt` (one word per line, PR-extensible without touching the validation script), e.g. `Sent`, `Paid`, `Done`, `Given`, `Taken`, `Written`, `Broken`, `Chosen`, `Held`, `Built`, `Sold`, `Bought`, `Caught`, `Brought`, `Taught`, `Found`, `Left`, `Lost`, `Won`, `Gone`, `Made`
+3. **Otherwise**: CI posts a **warning comment** on the PR ("the last segment doesn't look like a known past participle, please confirm") but **doesn't block** the merge
 
-### 2.5 Détection de commande — hard fail
+### 2.5 Command detection (hard fail)
 
-Indépendamment de 2.4, si le dernier segment se termine **exactement** par un verbe à l'impératif/infinitif connu (signe quasi certain d'un oubli de conjugaison), la CI bloque :
+Independent of 2.4, if the last segment ends **exactly** with a known imperative/infinitive verb (a near-certain sign of a missed conjugation), CI blocks:
 
 ```regex
 (Create|Update|Delete|Add|Remove|Set|Get|Send|Make|Register|Cancel|Renew|Pay|Login|Logout)$
 ```
 
-Ex. `Auth.CreateUser` → **bloqué** (`Create` en fin de segment). `Auth.UserCreated` → OK (se termine par `ed`, règle 2.4.1).
+E.g. `Auth.CreateUser`: **blocked** (`Create` at the end of the segment). `Auth.UserCreated`: OK (ends in `ed`, rule 2.4.1).
 
-### 2.6 Fichier de contrat — hard fail
-
-```
-/contracts/{provider}/{service}/{Entité}{VerbePassé}.v{N}.json
-```
-
-- Le nom de fichier (hors `.v{N}.json`) doit être identique au segment `{Entité}{VerbePassé}` de l'event.
-- Le `$id`/`title` déclaré dans le schéma JSON doit être identique au nom complet de l'event (3 segments).
-- `{N}` dans le nom de fichier doit correspondre au champ `version` déclaré dans le schéma.
-
-## 3. Algorithme de validation (pseudocode)
+### 2.6 Contract file (hard fail)
 
 ```
-pour chaque fichier modifié dans /contracts/**/*.json (PR) :
-    lire provider, service depuis le chemin du fichier
-    lire eventName, version depuis le contenu du schéma (title/$id, version)
-
-    1. eventName matche la regex structurelle (§2.1)         → sinon FAIL
-    2. eventName commence par "{provider}."                   → sinon FAIL
-    3. provider du manifeste du service == provider du chemin → sinon FAIL
-    4. provider (case-insensitive) absent des autres manifestes
-       (sauf même mainteneur)                                 → sinon FAIL
-    5. dernier segment se termine par un verbe de blocklist    → si oui, FAIL (§2.5)
-    6. dernier segment se termine par "ed"
-       OU présent dans irregular-participles.txt               → sinon WARNING seulement (§2.4)
-    7. nom de fichier == {Entité}{VerbePassé}                  → sinon FAIL
-    8. {N} du nom de fichier == version dans le schéma         → sinon FAIL
+/contracts/{provider}/{service}/{Entity}{PastParticiple}.v{N}.json
 ```
 
-## 4. Cas de test de validation
+- The file name (excluding `.v{N}.json`) must match the event's `{Entity}{PastParticiple}` segment.
+- The `$id`/`title` declared in the JSON schema must match the full event name (3 segments).
+- `{N}` in the file name must match the `version` field declared in the schema.
 
-Ces cas serviront de suite de tests au script CI une fois implémenté (post-MVP / au moment du scaffold generator).
+## 3. Validation algorithm (pseudocode)
 
-| Nom d'event | Résultat attendu | Raison |
+```
+for each file changed in /contracts/**/*.json (PR):
+    read provider, service from the file path
+    read eventName, version from the schema content (title/$id, version)
+
+    1. eventName matches the structural regex (§2.1)          -> else FAIL
+    2. eventName starts with "{provider}."                     -> else FAIL
+    3. service manifest provider == path provider              -> else FAIL
+    4. provider (case-insensitive) absent from other manifests
+       (unless same maintainer)                                -> else FAIL
+    5. last segment ends with a blocklisted verb                -> if so, FAIL (§2.5)
+    6. last segment ends in "ed"
+       OR present in irregular-participles.txt                 -> else WARNING only (§2.4)
+    7. file name == {Entity}{PastParticiple}                   -> else FAIL
+    8. {N} in file name == version in schema                   -> else FAIL
+```
+
+## 4. Validation test cases
+
+These cases will serve as the CI script's test suite once implemented (post-MVP / when the generator is scaffolded).
+
+| Event name | Expected result | Reason |
 |---|---|---|
-| `Ostrun.Auth.UserRegistered` | ✅ Pass | structure OK, `ed`, provider cohérent |
+| `Ostrun.Auth.UserRegistered` | ✅ Pass | structure OK, `ed`, consistent provider |
 | `Acme.Billing.InvoiceCreated` | ✅ Pass | structure OK, `ed` |
-| `Acme.Mailer.EmailSent` | ✅ Pass (avec vérif liste irrégulière) | `Sent` dans `irregular-participles.txt` |
-| `Auth.UserRegistered` | ❌ Fail | 2 segments seulement, pas de provider |
-| `ostrun.Auth.UserRegistered` | ❌ Fail | `ostrun` en minuscule, pas PascalCase |
-| `Ostrun.Auth.CreateUser` | ❌ Fail | se termine par `Create` (blocklist §2.5) |
-| `Ostrun.Auth.UserLogin` | ❌ Fail | se termine par `Login` (blocklist §2.5) |
-| `Acme.Auth.UserRegistered` (publié par un service dont le manifeste déclare `provider: "Globex"`) | ❌ Fail | incohérence provider/manifeste (§2.2) |
-| `Ostrun.Auth.UserWoken` | ⚠️ Warning, pas de fail | ne finit pas par `ed`, absent de la liste irrégulière — à confirmer manuellement |
-| Fichier `/contracts/ostrun/auth/UserRegistered.v1.json` contenant `"title": "Ostrun.Auth.UserRegistered"`, `"version": 1` | ✅ Pass | fichier, title et version cohérents |
-| Fichier `/contracts/ostrun/auth/UserRegistered.v2.json` contenant `"version": 1` | ❌ Fail | version fichier (`v2`) ≠ version schéma (`1`) |
-| Deux manifestes avec `provider: "Acme"` et `provider: "ACME"` par deux mainteneurs différents | ❌ Fail | collision insensible à la casse (§2.3) |
+| `Acme.Mailer.EmailSent` | ✅ Pass (with irregular-list check) | `Sent` is in `irregular-participles.txt` |
+| `Auth.UserRegistered` | ❌ Fail | only 2 segments, no provider |
+| `ostrun.Auth.UserRegistered` | ❌ Fail | `ostrun` lowercase, not PascalCase |
+| `Ostrun.Auth.CreateUser` | ❌ Fail | ends in `Create` (blocklist §2.5) |
+| `Ostrun.Auth.UserLogin` | ❌ Fail | ends in `Login` (blocklist §2.5) |
+| `Acme.Auth.UserRegistered` (published by a service whose manifest declares `provider: "Globex"`) | ❌ Fail | provider/manifest mismatch (§2.2) |
+| `Ostrun.Auth.UserWoken` | ⚠️ Warning, not a fail | doesn't end in `ed`, absent from the irregular list, needs manual confirmation |
+| File `/contracts/ostrun/auth/UserRegistered.v1.json` containing `"title": "Ostrun.Auth.UserRegistered"`, `"version": 1` | ✅ Pass | file, title, and version consistent |
+| File `/contracts/ostrun/auth/UserRegistered.v2.json` containing `"version": 1` | ❌ Fail | file version (`v2`) != schema version (`1`) |
+| Two manifests with `provider: "Acme"` and `provider: "ACME"` from two different maintainers | ❌ Fail | case-insensitive collision (§2.3) |
 
-## 5. Statut
+## 5. Status
 
-Spécification validée (2026-08-17). Implémentation du script CI reportée à l'attaque du scaffold generator — voir `ostrun-contexte-complet.md` pour la roadmap.
+Specification validated (2026-08-17). CI script implementation deferred until the generator scaffold work starts; see `ostrun-contexte-complet.md` for the roadmap.

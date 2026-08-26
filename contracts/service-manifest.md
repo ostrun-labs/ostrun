@@ -1,37 +1,37 @@
-# Manifeste de service — spécification
+# Service manifest, specification
 
-Chaque service déclaré au catalogue Ostrun (cœur ou contribué) fournit un manifeste. C'est ce que l'UI de génération et la CI lisent pour construire le catalogue, câbler la gateway et générer le `docker-compose.yml`.
+Every service declared in the Ostrun catalog (core or contributed) provides a manifest. This is what the generation UI and CI read to build the catalog, wire the gateway, and generate `docker-compose.yml`.
 
-## Emplacement
+## Location
 
 ```
 services/{provider}/{service}/ostrun.manifest.json
 ```
 
-Ex. : `services/ostrun/auth/ostrun.manifest.json`
+E.g.: `services/ostrun/auth/ostrun.manifest.json`
 
-## Champs
+## Fields
 
-| Champ | Type | Requis | Description |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `provider` | string | oui | Identifiant déclaratif du contributeur/mainteneur, PascalCase. Doit matcher le segment `Provider` des events publiés. |
-| `service` | string | oui | Nom court du service, PascalCase si composé (`Auth`, `Mailer`, `OrderFulfillment`). |
-| `version` | string | oui | Version du service lui-même (semver, ex. `1.0.0`). |
-| `displayName` | string | oui | Nom affiché dans le catalogue (UI). |
-| `description` | string | oui | Description courte affichée dans le catalogue. |
-| `basePath` | string | optionnel (défaut `/`) | Préfixe interne sous lequel le service monte ses routes (ex. `/auth`). Sans ce champ, la gateway suppose que le service sert ses routes à la racine — si ce n'est pas le cas, elle strip le préfixe applicatif et casse le routing (`/auth/register` → `/register` côté service → 404). |
-| `events.published` | string[] | oui (peut être vide) | Noms complets des events publiés (3 segments), référencent des fichiers dans `/contracts`. |
-| `events.consumed` | string[] | oui (peut être vide) | Noms complets des events consommés (3 segments). Le routage vers ce service se fait par abonnement à un exchange RabbitMQ nommé d'après l'event (pas d'endpoint HTTP à déclarer) — voir « Bus d'events » ci-dessous. |
-| `env` | object[] | oui (peut être vide) | Variables d'environnement attendues. Chaque entrée : `name`, `description`, `required` (bool), `default` (optionnel). |
-| `ports` | object[] | oui | Ports exposés par le service dans son conteneur. Chaque entrée : `containerPort` (number), `protocol` (optionnel, ex. `http`), `description` (optionnel). Un tableau plutôt qu'un seul port, pour les services qui exposent plus d'un port. |
-| `needsDb` | boolean | oui | Indique si le service nécessite sa propre base de données. Si `true`, le générateur provisionne un conteneur DB dédié dans le `docker-compose.yml` et ajoute les variables de connexion à `.env.example` — jamais une DB partagée entre services. |
-| `dependencies` | string[] | oui (peut être vide) | Services requis (`{provider}/{service}`) devant être sélectionnés en même temps que celui-ci. |
-| `healthCheck.path` | string | oui | Chemin de l'endpoint de health check (ex. `/health`). |
-| `healthCheck.method` | string | oui | Méthode HTTP à utiliser pour l'appel de health check (ex. `GET`). |
-| `repository` | string (URL) | optionnel | Lien vers le repo Git du service — utilisé par le générateur pour cloner le code source (mode MVP "starter à bidouiller"). |
-| `registry` | string (URL/image) | optionnel | Référence de l'image Docker déjà buildée — utilisée pour le mode "prêt à l'emploi" (post-MVP), permet de sauter le clone et juste référencer l'image dans le `docker-compose.yml`. |
+| `provider` | string | yes | Declarative identifier for the contributor/maintainer, PascalCase. Must match the `Provider` segment of published events. |
+| `service` | string | yes | Short service name, PascalCase if compound (`Auth`, `Mailer`, `OrderFulfillment`). |
+| `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). |
+| `displayName` | string | yes | Name shown in the catalog (UI). |
+| `description` | string | yes | Short description shown in the catalog. |
+| `basePath` | string | optional (default `/`) | Internal prefix under which the service mounts its routes (e.g. `/auth`). Without this field, the gateway assumes the service serves its routes at the root. If that's not the case, it strips the app prefix and breaks routing (`/auth/register` -> `/register` on the service side -> 404). |
+| `events.published` | string[] | yes (can be empty) | Full names of published events (3 segments), referencing files in `/contracts`. |
+| `events.consumed` | string[] | yes (can be empty) | Full names of consumed events (3 segments). Routing to this service happens by subscribing to a RabbitMQ exchange named after the event (no HTTP endpoint to declare), see "Event bus" below. |
+| `env` | object[] | yes (can be empty) | Expected environment variables. Each entry: `name`, `description`, `required` (bool), `default` (optional). |
+| `ports` | object[] | yes | Ports the service exposes in its container. Each entry: `containerPort` (number), `protocol` (optional, e.g. `http`), `description` (optional). An array rather than a single port, for services that expose more than one port. |
+| `needsDb` | boolean | yes | Whether the service needs its own database. If `true`, the generator provisions a dedicated DB container in `docker-compose.yml` and adds the connection variables to `.env.example`. Never a DB shared between services. |
+| `dependencies` | string[] | yes (can be empty) | Required services (`{provider}/{service}`) that must be selected alongside this one. |
+| `healthCheck.path` | string | yes | Path of the health check endpoint (e.g. `/health`). |
+| `healthCheck.method` | string | yes | HTTP method to use for the health check call (e.g. `GET`). |
+| `repository` | string (URL) | optional | Link to the service's Git repo, used by the generator to clone the source code (MVP "starter to tinker with" mode). |
+| `registry` | string (URL/image) | optional | Reference to an already-built Docker image, used for the "ready-to-use" mode (post-MVP). Lets the generator skip the clone and just reference the image in `docker-compose.yml`. |
 
-## Exemple — service Auth
+## Example: Auth service
 
 ```json
 {
@@ -39,7 +39,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "service": "auth",
   "version": "1.0.0",
   "displayName": "Auth",
-  "description": "Comptes, sessions et JWT prêts à l'emploi.",
+  "description": "Accounts, sessions, and JWT out of the box.",
   "basePath": "/auth",
   "events": {
     "published": [
@@ -51,18 +51,18 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "env": [
     {
       "name": "JWT_SIGNING_KEY",
-      "description": "Clé de signature des JWT émis par le service.",
+      "description": "Signing key for JWTs issued by the service.",
       "required": true
     },
     {
       "name": "JWT_EXPIRATION_MINUTES",
-      "description": "Durée de validité des tokens émis, en minutes.",
+      "description": "Validity duration of issued tokens, in minutes.",
       "required": false,
       "default": "60"
     }
   ],
   "ports": [
-    { "containerPort": 8080, "protocol": "http", "description": "API HTTP" }
+    { "containerPort": 8080, "protocol": "http", "description": "HTTP API" }
   ],
   "needsDb": true,
   "dependencies": [],
@@ -75,7 +75,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 }
 ```
 
-## Exemple — service avec dépendance (Mailer)
+## Example: service with a dependency (Mailer)
 
 ```json
 {
@@ -83,7 +83,7 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "service": "mailer",
   "version": "1.0.0",
   "displayName": "Mailer",
-  "description": "Envoi d'emails déclenché par les events des autres services.",
+  "description": "Sends emails triggered by other services' events.",
   "events": {
     "published": ["Ostrun.Mailer.EmailSent"],
     "consumed": ["Ostrun.Auth.UserRegistered"]
@@ -91,12 +91,12 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
   "env": [
     {
       "name": "SMTP_HOST",
-      "description": "Hôte du serveur SMTP utilisé pour l'envoi.",
+      "description": "SMTP server host used for sending.",
       "required": true
     }
   ],
   "ports": [
-    { "containerPort": 8081, "protocol": "http", "description": "API HTTP" }
+    { "containerPort": 8081, "protocol": "http", "description": "HTTP API" }
   ],
   "needsDb": false,
   "dependencies": ["ostrun/auth"],
@@ -109,16 +109,16 @@ Ex. : `services/ostrun/auth/ostrun.manifest.json`
 }
 ```
 
-## Bus d'events
+## Event bus
 
-Les services publient/consomment via RabbitMQ + MassTransit. Le nom d'exchange est forcé au nom complet de l'event déclaré dans `/contracts` (`cfg.Message<T>(m => m.SetEntityName("Ostrun.Auth.UserRegistered"))` côté MassTransit), pas dérivé du nom du type CLR — chaque service définit son propre type de message local, aucun package de contrat partagé n'est requis, un futur service dans un autre langage suit la même convention de nommage d'exchange sans dépendance C#. Le générateur ajoute un conteneur `rabbitmq` unique à l'app dès qu'au moins un service sélectionné publie ou consomme un event.
+Services publish and consume via RabbitMQ + MassTransit. The exchange name is forced to the event's full name as declared in `/contracts` (`cfg.Message<T>(m => m.SetEntityName("Ostrun.Auth.UserRegistered"))` on the MassTransit side), not derived from the CLR type name. Each service defines its own local message type, no shared contract package is required, and a future service written in another language follows the same exchange naming convention with no C# dependency. The generator adds a single `rabbitmq` container to the app as soon as at least one selected service publishes or consumes an event.
 
-En l'absence de `RabbitMq__Host` en configuration, chaque service bascule sur le transport in-memory de MassTransit — aucun broker n'est requis pour lancer un service seul, dans son propre `docker-compose.yml` standalone.
+Without `RabbitMq__Host` set in configuration, each service falls back to MassTransit's in-memory transport. No broker is required to run a single service standalone, in its own `docker-compose.yml`.
 
-## Statut
+## Status
 
-Champs `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb` et `healthCheck.method` alignés (2026-08-21) sur l'implémentation réelle et les besoins du gateway, identifiés lors du spike du premier app généré — les manifestes livrés avant cette date utilisaient encore `events.publishes`/`events.consumes`, `port`, `needs_db` (snake_case) et `healthCheck.format`.
+Fields `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb`, and `healthCheck.method` were aligned (2026-08-21) with the real implementation and the gateway's needs, identified during the first generated app's spike. Manifests shipped before that date still used `events.publishes`/`events.consumes`, `port`, `needs_db` (snake_case), and `healthCheck.format`.
 
-`events.consumed` simplifié en tableau de strings (2026-08-24) : la livraison passe désormais par RabbitMQ/MassTransit au lieu d'un endpoint HTTP par consommateur, donc `path`/`method` n'ont plus de sens dans le manifeste.
+`events.consumed` was simplified to an array of strings (2026-08-24): delivery now goes through RabbitMQ/MassTransit instead of one HTTP endpoint per consumer, so `path`/`method` no longer make sense in the manifest.
 
-Le schéma JSON formel (pour validation automatique par la CI) n'est pas encore écrit — à faire au moment du scaffold generator, comme pour la validation des events (`/contracts/README.md`).
+The formal JSON schema (for automatic CI validation) hasn't been written yet. To do when the generator is scaffolded, same as event validation (`/contracts/README.md`).

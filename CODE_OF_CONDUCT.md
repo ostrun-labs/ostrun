@@ -7,7 +7,7 @@ Be respectful, stay on topic. This project is open to external contributions; it
 ## Expected behavior
 
 - Stay factual and constructive in issues, PRs, and discussions, even when disagreeing.
-- Accept technical criticism of your code without taking it personally — and phrase your own the same way.
+- Accept technical criticism of your code without taking it personally, and phrase your own the same way.
 - Respect the maintainer's and other contributors' time: give clear context in issues/PRs (see `CONTRIBUTING.md`), no aggressive follow-ups.
 
 ## Unacceptable behavior
@@ -19,13 +19,13 @@ Be respectful, stay on topic. This project is open to external contributions; it
 
 ## Enforcement
 
-Conduct issues can be reported by email to the maintainer (see `SECURITY.md` for the contact reserved to vulnerabilities — for a conduct concern, send a direct email instead, or open an issue if the topic allows it). The maintainer may, at their discretion:
+Conduct issues can be reported by email to the maintainer. `SECURITY.md` lists the contact reserved for vulnerabilities; for a conduct concern, send a direct email instead, or open an issue if the topic allows it. The maintainer may, at their discretion:
 
 - edit or remove a problematic comment/issue/PR,
 - warn the person involved,
 - temporarily or permanently ban someone from the repo for repeat or serious violations.
 
-There's no dedicated moderation team for now — the project is maintained by a single person on their own time. This will be revisited if the project grows.
+There's no dedicated moderation team for now. The project is maintained by a single person on their own time. This will be revisited if the project grows.
 
 ## Scope
 
