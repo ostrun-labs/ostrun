@@ -3,12 +3,12 @@
   "services": [
     {
       "ref": "ostrun/auth",
-      "repository": "https://github.com/Thykimik/ostrun-auth-service",
+      "repository": "https://github.com/ostrun-labs/ostrun-auth-service",
       "rev": "main"
     },
     {
       "ref": "ostrun/mailer",
-      "repository": "https://github.com/Thykimik/ostrun-mailer-service",
+      "repository": "https://github.com/ostrun-labs/ostrun-mailer-service",
       "rev": "main"
     }
   ]
