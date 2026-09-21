@@ -8,16 +8,50 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="hero">
+  <nav class="topnav">
+    <div class="container topnav-inner">
+      <a class="wordmark" href="#top">ostrun</a>
+      <div class="topnav-links">
+        <a href="#principes">Principes</a>
+        <a href="#mvp">MVP</a>
+        <a class="topnav-gh" href="https://github.com/ostrun-labs/ostrun">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
     <div class="container">
-      <p class="eyebrow">Ostrun</p>
-      <h1>Un backend microservices, généré, pas loué</h1>
+      <h1>Un backend microservices,<br>généré. pas loué.</h1>
       <p class="lead">
         Sélectionnez des services dans un catalogue, obtenez un repo indépendant prêt à cloner.
         Pas de plateforme, pas de compte, pas de dépendance runtime à Ostrun après génération.
       </p>
       <div class="cta-group">
         <a class="btn btn-primary" href="https://github.com/ostrun-labs/ostrun">Voir le projet sur GitHub</a>
+        <code class="clone-cmd" tabindex="0">git clone github.com/ostrun-labs/ostrun</code>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="terminal" aria-hidden="true">
+        <div class="terminal-bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="terminal-title">ostrun generate</span>
+        </div>
+        <pre class="terminal-body"><span class="ln"><span class="prompt">$</span> ostrun generate --services auth,mailer,billing</span>
+<span class="ln out">? Sélection : <span class="ok">auth</span>, <span class="ok">mailer</span>, <span class="ok">billing</span></span>
+<span class="ln out">✓ Contrat de service validé (manifest + events)</span>
+<span class="ln out">✓ Repo généré :</span>
+<span class="ln tree">  ./ostrun-app/
+  ├── gateway/
+  ├── services/
+  │   ├── auth/
+  │   ├── mailer/
+  │   └── billing/
+  ├── docker-compose.yml
+  └── .env.example</span>
+<span class="ln out">✓ Prêt. <span class="muted">Aucune dépendance à Ostrun après génération.</span></span>
+<span class="ln"><span class="prompt">$</span> <span class="cursor"></span></span></pre>
       </div>
     </div>
   </header>
@@ -37,7 +71,7 @@
       </div>
     </section>
 
-    <section class="section section-alt">
+    <section class="section section-alt" id="principes">
       <div class="container">
         <h2>Principes non négociables</h2>
         <ul class="principles">
@@ -76,7 +110,7 @@
       </div>
     </section>
 
-    <section class="section section-alt">
+    <section class="section section-alt" id="mvp">
       <div class="container">
         <h2>MVP</h2>
         <ul class="plain-list">
