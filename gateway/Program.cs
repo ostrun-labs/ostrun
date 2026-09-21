@@ -1,3 +1,6 @@
+using Serilog;
+using Serilog.Formatting.Compact;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // The composed app's routes/clusters live outside the image, so one gateway
@@ -9,7 +12,17 @@ builder.Services
     .AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+builder.Host.UseSerilog((context, loggerConfiguration) => loggerConfiguration
+    .ReadFrom.Configuration(context.Configuration)
+    .WriteTo.Console(new CompactJsonFormatter()));
+
 var app = builder.Build();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+        diagnosticContext.Set("RequestId", httpContext.TraceIdentifier);
+});
 
 // Event-sink endpoints (a service's HTTP binding for a consumed event) are
 // internal by construction: reachable only service-to-service on the compose
