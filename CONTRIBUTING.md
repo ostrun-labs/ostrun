@@ -28,6 +28,31 @@ Before proposing a new service, keep the project's non-negotiable rules in mind:
 
 For now, adding a service to the **official catalog** (the one exposed in the generation UI) is reviewed case by case by the project maintainer. This will be revisited once the MVP is public.
 
+### Service stack versions (.NET services)
+
+Every .NET service in the catalog targets the versions below. Use them as-is when you create a new service. A service written in another language only has to honor the contract (API + events), so this table doesn't apply to it.
+
+| Area | Package | Version |
+|---|---|---|
+| Runtime | .NET (`net8.0`), Docker images `mcr.microsoft.com/dotnet/sdk:8.0` and `aspnet:8.0` | 8.0 |
+| Messaging | `MassTransit.RabbitMQ` | 8.4.1 |
+| Messaging | `MassTransit.EntityFrameworkCore` (transactional outbox) | 8.4.1 |
+| Data | `Microsoft.EntityFrameworkCore`, `Microsoft.EntityFrameworkCore.Design` | 8.0.11 |
+| Data | `Npgsql.EntityFrameworkCore.PostgreSQL` | 8.0.11 |
+| Auth | `Microsoft.AspNetCore.Authentication.JwtBearer` | 8.0.11 |
+| Auth | `Microsoft.Extensions.Identity.Core` | 8.0.11 |
+| Auth | `System.IdentityModel.Tokens.Jwt` | 8.1.2 |
+| Config | `Microsoft.Extensions.Options.ConfigurationExtensions`, `Microsoft.Extensions.Options.DataAnnotations` | 8.0.0 |
+| Health | `AspNetCore.HealthChecks.NpgSql` | 8.0.2 |
+| Tests | `xunit`, `xunit.runner.visualstudio` | 2.5.3 |
+| Tests | `Microsoft.NET.Test.Sdk` | 17.8.0 |
+| Tests | `NSubstitute` | 5.1.0 |
+| Tests | `coverlet.collector` | 6.0.0 |
+
+MassTransit stays on 8.4.1 on purpose. The 8.5 EF Core integration requires EF Core 9, and the services run on EF Core 8. Don't bump MassTransit or EF Core on its own in a single service. A version change to anything in this table goes through one PR per service repo, landed together, plus an update to this table.
+
+Libraries specific to one service (MailKit for the mailer, for example) are up to that service.
+
 ## Adding or changing an event
 
 This is the most sensitive part of the project. Please follow these rules to the letter:
