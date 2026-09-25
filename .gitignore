@@ -69,6 +69,3 @@ Thumbs.db
 
 # Claude Code local overrides (project settings.json stays tracked)
 .claude/settings.local.json
-
-# Personal notes / brainstorming, not meant to be committed
-/brainstorm/
