@@ -54,7 +54,7 @@ This repo contains no service code: each cataloged service lives in its own inde
 - [`contracts/README.md`](./contracts/README.md): event governance and naming convention
 - [`contracts/service-manifest.md`](./contracts/service-manifest.md): service manifest specification
 - [`generator/README.md`](./generator/README.md): how the generator works, known MVP limits
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md): contribution process
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md): contribution process and the [package versions every .NET service targets](./CONTRIBUTING.md#service-stack-versions-net-services)
 
 ## License
 
