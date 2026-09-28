@@ -1,6 +1,6 @@
 # Event naming convention, CI validation specification
 
-This document is the **reference specification** for validating Ostrun events. It doesn't contain code yet: it's the contract the future CI validation script (to be written when the generator is scaffolded) will need to implement, along with its test cases.
+This document is the **reference specification** for validating Ostrun events, with its test cases. CI only implements part of it today: the contract file checks in §2.6 run on every PR (`validate-contracts` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). The maintainer checks the other rules by hand during review until CI covers them. See §5.
 
 ## 1. Event name format
 
@@ -31,7 +31,7 @@ The name must be 3 PascalCase segments separated by dots:
 ### 2.3 Provider collision (hard fail, at the catalog level, not the event level)
 
 - Two different services cannot declare the same `provider` (**case-insensitive** comparison) unless they share the same maintainer.
-- Check: when a service is added, compare its `provider` against every `provider` already present in `/services/**/ostrun.manifest.json`. Case-insensitive collision (`Acme` and `ACME` collide).
+- Check: when a service is added, compare its `provider` against the `provider` of every service already listed in [`catalog.json`](../catalog.json). Case-insensitive collision (`Acme` and `ACME` collide).
 - The repo maintainer decides manually when a collision is detected (no auto-resolution).
 
 ### 2.4 `PastParticiple` segment (loose validation, warning, doesn't block)
@@ -83,7 +83,7 @@ for each file changed in /contracts/**/*.json (PR):
 
 ## 4. Validation test cases
 
-These cases will serve as the CI script's test suite once implemented (post-MVP / when the generator is scaffolded).
+These cases will become the CI script's test suite once it covers the full spec.
 
 | Event name | Expected result | Reason |
 |---|---|---|
@@ -102,4 +102,16 @@ These cases will serve as the CI script's test suite once implemented (post-MVP 
 
 ## 5. Status
 
-Specification validated (2026-08-17). CI script implementation deferred until the generator scaffold work starts; see `ostrun-contexte-complet.md` for the roadmap.
+Specification validated on 2026-08-17.
+
+What CI enforces today (`validate-contracts` job):
+
+- §2.6: file name matches the entity, `title` provider and service match the directory, file version matches `version`.
+
+Checked by hand in review until CI covers them:
+
+- §2.1 structure regex
+- §2.2 provider consistency with the manifest
+- §2.3 provider collision
+- §2.4 past participle warning
+- §2.5 command blocklist

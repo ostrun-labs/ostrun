@@ -19,7 +19,7 @@ Be respectful, stay on topic. This project is open to external contributions; it
 
 ## Enforcement
 
-Conduct issues can be reported by email to the maintainer. `SECURITY.md` lists the contact reserved for vulnerabilities; for a conduct concern, send a direct email instead, or open an issue if the topic allows it. The maintainer may, at their discretion:
+To report a conduct problem, open an issue if the topic can be discussed in public. If it can't, open an issue that only asks the maintainer for a private channel, without the details. The maintainer may, at their discretion:
 
 - edit or remove a problematic comment/issue/PR,
 - warn the person involved,

@@ -1,14 +1,16 @@
 # Service manifest, specification
 
-Every service declared in the Ostrun catalog (core or contributed) provides a manifest. This is what the generation UI and CI read to build the catalog, wire the gateway, and generate `docker-compose.yml`.
+Every service in the Ostrun catalog (core or contributed) ships a manifest. The generator reads it to validate the service, wire the gateway, and generate `docker-compose.yml` and `.env.example`.
 
 ## Location
 
+At the root of the service's own repo:
+
 ```
-services/{provider}/{service}/ostrun.manifest.json
+ostrun.manifest.json
 ```
 
-E.g.: `services/ostrun/auth/ostrun.manifest.json`
+In a generated app, the generator clones each service into `services/{provider}/{service}/`, so the auth manifest ends up at `services/ostrun/auth/ostrun.manifest.json`.
 
 ## Fields
 
@@ -17,7 +19,7 @@ E.g.: `services/ostrun/auth/ostrun.manifest.json`
 | `provider` | string | yes | Declarative identifier for the contributor/maintainer, PascalCase. Must match the `Provider` segment of published events. |
 | `service` | string | yes | Short service name, PascalCase if compound (`Auth`, `Mailer`, `OrderFulfillment`). |
 | `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). |
-| `displayName` | string | yes | Name shown in the catalog (UI). |
+| `displayName` | string | yes | Human-readable name of the service. |
 | `description` | string | yes | Short description shown in the catalog. |
 | `basePath` | string | optional (default `/`) | Internal prefix under which the service mounts its routes (e.g. `/auth`). Without this field, the gateway assumes the service serves its routes at the root. If that's not the case, it strips the app prefix and breaks routing (`/auth/register` -> `/register` on the service side -> 404). |
 | `events.published` | string[] | yes (can be empty) | Full names of published events (3 segments), referencing files in `/contracts`. |
@@ -70,7 +72,7 @@ E.g.: `services/ostrun/auth/ostrun.manifest.json`
     "path": "/health",
     "method": "GET"
   },
-  "repository": "https://github.com/Thykimik/ostrun-auth-service",
+  "repository": "https://github.com/ostrun-labs/ostrun-auth-service",
   "registry": null
 }
 ```
@@ -104,7 +106,7 @@ E.g.: `services/ostrun/auth/ostrun.manifest.json`
     "path": "/health",
     "method": "GET"
   },
-  "repository": "https://github.com/Thykimik/ostrun-mailer-service",
+  "repository": "https://github.com/ostrun-labs/ostrun-mailer-service",
   "registry": null
 }
 ```
@@ -121,4 +123,4 @@ Fields `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb`, a
 
 `events.consumed` was simplified to an array of strings (2026-08-24): delivery now goes through RabbitMQ/MassTransit instead of one HTTP endpoint per consumer, so `path`/`method` no longer make sense in the manifest.
 
-The formal JSON schema (for automatic CI validation) hasn't been written yet. To do when the generator is scaffolded, same as event validation (`/contracts/README.md`).
+There is no formal JSON schema for the manifest yet. For now the generator checks the fields it depends on when it runs (see [`generator/README.md`](../generator/README.md)).
