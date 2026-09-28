@@ -25,7 +25,7 @@ cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
-Run it from the root of this repo. On Windows, run `git config --global core.longpaths true` first: some paths in the Auth service repo go past the 260-character limit and the clone fails without it.
+Run it from the root of this repo. On Windows, a full file path is capped at 260 characters by default. The Auth service has paths up to 115 characters, cloned under `{output}/services/ostrun/auth/`, so a deep output folder makes the clone fail. Use a short output path or run `git config --global core.longpaths true`.
 
 A bare `ref` is enough for a service listed in [`../catalog.json`](../catalog.json): the generator resolves `repository`/`rev` from there. For a personal service not yet catalogued, giving `repository` (and optionally `rev`) directly in the `app.json` entry skips the catalog lookup.
 

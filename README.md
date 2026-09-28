@@ -29,7 +29,7 @@ cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
-On Windows, enable long paths in Git first (`git config --global core.longpaths true`). Some files in the Auth service repo go past the 260-character path limit, and the clone fails without it.
+On Windows, keep the output folder path short or enable long paths in Git (`git config --global core.longpaths true`). Windows caps a full file path at 260 characters by default, and the Auth service has file paths up to 115 characters long, so an output folder path longer than about 140 characters makes the clone fail.
 
 What the generator does and its known limits: [`generator/README.md`](./generator/README.md).
 
