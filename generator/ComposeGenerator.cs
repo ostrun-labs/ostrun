@@ -92,7 +92,7 @@ public static class ComposeGenerator
                 continue;
             }
 
-            var varName = prefix + Naming.ToScreamingSnake(env.Name);
+            var varName = Naming.EnvVar(key, env.Name);
             sb.AppendLine($"      {env.Name}: ${{{varName}}}");
         }
 

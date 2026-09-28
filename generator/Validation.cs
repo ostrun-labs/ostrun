@@ -39,6 +39,15 @@ public static class Validation
                 errors.Add($"{label}: healthCheck.method must be 'GET' (YARP active health checks are GET-only), got '{svc.Manifest.HealthCheck.Method}'.");
             }
 
+            var envVars = new HashSet<string>();
+            foreach (var env in svc.Manifest.Env)
+            {
+                if (!envVars.Add(Naming.EnvVar(svc.ServiceKey, env.Name)))
+                {
+                    errors.Add($"{label}: env entry '{env.Name}' maps to .env variable '{Naming.EnvVar(svc.ServiceKey, env.Name)}', which another entry already uses.");
+                }
+            }
+
             foreach (var dep in svc.Manifest.Dependencies)
             {
                 if (!services.Any(s => s.Ref.Ref == dep))

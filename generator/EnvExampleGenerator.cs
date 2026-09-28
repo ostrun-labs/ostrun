@@ -46,7 +46,7 @@ public static class EnvExampleGenerator
                     continue;
                 }
 
-                var varName = prefix + Naming.ToScreamingSnake(env.Name);
+                var varName = Naming.EnvVar(key, env.Name);
                 if (!string.IsNullOrEmpty(env.Description))
                 {
                     sb.AppendLine($"# {(env.Required ? "required" : "optional")} — {env.Description}");

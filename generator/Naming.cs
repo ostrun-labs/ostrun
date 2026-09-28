@@ -32,4 +32,16 @@ public static class Naming
     // "auth" -> "AUTH_", used to prefix every env var this service owns in
     // the app-level .env.example, so two services never collide.
     public static string EnvPrefix(string serviceKey) => serviceKey.ToUpperInvariant() + "_";
+
+    // App-level .env variable for one of a service's manifest env entries.
+    // The prefix is skipped when the name already starts with it, so the auth
+    // service's "Auth__TrustedOrigins" becomes AUTH_TRUSTED_ORIGINS, not
+    // AUTH_AUTH_TRUSTED_ORIGINS. Validation rejects manifests where two
+    // entries land on the same variable.
+    public static string EnvVar(string serviceKey, string envName)
+    {
+        var prefix = EnvPrefix(serviceKey);
+        var name = ToScreamingSnake(envName);
+        return name.StartsWith(prefix, StringComparison.Ordinal) ? name : prefix + name;
+    }
 }
