@@ -26,12 +26,17 @@ public static class ComposeGenerator
 
         AppendGateway(sb, app, services);
 
-        sb.AppendLine("volumes:");
-        foreach (var svc in services.Where(s => s.Manifest.NeedsDb))
+        // Compose rejects a bare "volumes:" key, so it is only written when a DB needs one.
+        var dbServices = services.Where(s => s.Manifest.NeedsDb).ToList();
+        if (dbServices.Count > 0)
         {
-            sb.AppendLine($"  {svc.ServiceKey}-db-data:");
+            sb.AppendLine("volumes:");
+            foreach (var svc in dbServices)
+            {
+                sb.AppendLine($"  {svc.ServiceKey}-db-data:");
+            }
+            sb.AppendLine();
         }
-        sb.AppendLine();
 
         return sb.ToString();
     }
