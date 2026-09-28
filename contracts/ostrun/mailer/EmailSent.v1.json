@@ -3,7 +3,7 @@
   "$id": "https://ostrun.dev/contracts/ostrun/mailer/EmailSent.v1.json",
   "title": "Ostrun.Mailer.EmailSent",
   "version": 1,
-  "description": "Publié par le service Mailer après l'envoi (ou la tentative d'envoi) d'un email déclenché par un event amont.",
+  "description": "Published by the Mailer service after it sends, or tries to send, an email triggered by an upstream event.",
   "type": "object",
   "additionalProperties": false,
   "required": ["userId", "email", "sourceEvent", "sentAtUtc"],
@@ -11,21 +11,21 @@
     "userId": {
       "type": "string",
       "format": "uuid",
-      "description": "Identifiant de l'utilisateur destinataire."
+      "description": "Id of the recipient user."
     },
     "email": {
       "type": "string",
       "format": "email",
-      "description": "Adresse email destinataire."
+      "description": "Recipient email address."
     },
     "sourceEvent": {
       "type": "string",
-      "description": "Nom complet de l'event amont ayant déclenché cet envoi (ex. Ostrun.Auth.UserRegistered)."
+      "description": "Full name of the upstream event that triggered this email (e.g. Ostrun.Auth.UserRegistered)."
     },
     "sentAtUtc": {
       "type": "string",
       "format": "date-time",
-      "description": "Horodatage UTC de l'envoi."
+      "description": "UTC timestamp of the send."
     }
   }
 }
