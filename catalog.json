@@ -10,6 +10,11 @@
       "ref": "ostrun/mailer",
       "repository": "https://github.com/ostrun-labs/ostrun-mailer-service",
       "rev": "main"
+    },
+    {
+      "ref": "ostrun/crawler",
+      "repository": "https://github.com/ostrun-labs/ostrun-crawler-service",
+      "rev": "main"
     }
   ]
 }
