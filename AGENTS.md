@@ -45,7 +45,7 @@ The rest of this document is meant to help you navigate the repo and make change
 - `gateway/` is a YARP skeleton, copied verbatim into generated apps. Not a running service in this repo; it has no business logic of its own, only routing config that the generator overwrites (`routes.generated.json`).
 - `contracts/` holds event schemas (versioned, `/contracts/{provider}/{service}/{Entity}{PastParticiple}.v1.json`) and the service manifest spec. This is the most sensitive part of the repo, see naming rules below.
 - `catalog.json` is a hand-maintained list of catalogable services (`ref` → `repository`/`rev`). No CI currently checks it stays in sync with the manifests of the services it lists, only its own structural validity.
-- `brainstorm/` holds design notes, PRDs, roadmap. Read for context/rationale, don't treat as current-state documentation; it can be stale relative to the code.
+- `brainstorm/` is the maintainer's local folder for design notes, PRDs and roadmap. It isn't committed, so it only exists in the maintainer's checkout. If it's there, read it for rationale, but don't treat it as current-state documentation; it can be stale relative to the code.
 - `.github/workflows/ci.yml` runs contract and catalog validation.
 
 ## Event and manifest rules
@@ -80,7 +80,7 @@ These are enforced by CI and reviewed strictly. Don't loosen them without mainta
 
 ## Plans and work artifacts
 
-- `brainstorm/` already serves as the durable notes/roadmap location for this project. Put design rationale there if asked, don't invent a second `docs/` or `.plans/` tree.
+- Design rationale goes in `brainstorm/` (local, not committed) when the maintainer asks for it. Don't invent a committed `docs/` or `.plans/` tree.
 - Don't commit agent scratch files or throwaway research notes outside `brainstorm/`.
 
 ## Taste

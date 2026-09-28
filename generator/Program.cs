@@ -4,7 +4,7 @@ using OstrunGenerator;
 
 if (args.Length < 2 || args[0] is "-h" or "--help")
 {
-    Console.WriteLine("Usage: dotnet run --project ostrun/generator -- <app.json> <output-dir>");
+    Console.WriteLine("Usage: dotnet run --project generator -- <app.json> <output-dir>");
     return 1;
 }
 

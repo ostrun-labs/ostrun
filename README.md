@@ -4,7 +4,7 @@
 
 Technical showcase built to demonstrate a production-shaped distributed architecture: event-driven decoupling, strict service independence, governance designed from the start to accept external code.
 
-> Private repo for now. MVP being finalized.
+> Early MVP. The reference Auth service is still in progress, so expect breaking changes.
 
 ## Quickstart
 
@@ -29,6 +29,8 @@ cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
+On Windows, enable long paths in Git first (`git config --global core.longpaths true`). Some files in the Auth service repo go past the 260-character path limit, and the clone fails without it.
+
 What the generator does and its known limits: [`generator/README.md`](./generator/README.md).
 
 ## Principles
@@ -47,7 +49,7 @@ What the generator does and its known limits: [`generator/README.md`](./generato
 CONTRIBUTING.md, LICENSE
 ```
 
-This repo contains no service code: each cataloged service lives in its own independent repo, e.g. [`ostrun-auth-service`](https://github.com/Thykimik/ostrun-auth-service) and [`ostrun-mailer-service`](https://github.com/Thykimik/ostrun-mailer-service).
+This repo contains no service code: each cataloged service lives in its own independent repo, e.g. [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service) and [`ostrun-mailer-service`](https://github.com/ostrun-labs/ostrun-mailer-service).
 
 ## Documentation
 
