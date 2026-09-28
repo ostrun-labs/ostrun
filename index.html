@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ostrun — Catalogue de services et générateur de backends microservices</title>
-  <meta name="description" content="Ostrun génère un backend microservices prêt à cloner à partir d'un catalogue de services indépendants, communiquant par API et events.">
+  <title>Ostrun: service catalog and microservice backend generator</title>
+  <meta name="description" content="Ostrun generates a microservice backend you own, from a catalog of independent services that talk over APIs and events.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <div class="container topnav-inner">
       <a class="wordmark" href="#top">ostrun</a>
       <div class="topnav-links">
-        <a href="#principes">Principes</a>
+        <a href="#principles">Principles</a>
         <a href="#mvp">MVP</a>
         <a class="topnav-gh" href="https://github.com/ostrun-labs/ostrun">GitHub</a>
       </div>
@@ -21,14 +21,14 @@
 
   <header class="hero" id="top">
     <div class="container">
-      <h1>Un backend microservices,<br>généré. pas loué.</h1>
+      <h1>A microservice backend,<br>generated. not rented.</h1>
       <p class="lead">
-        Sélectionnez des services dans un catalogue, obtenez un repo indépendant prêt à cloner.
-        Pas de plateforme, pas de compte, pas de dépendance runtime à Ostrun après génération.
+        Pick services from a catalog and get a standalone repo you own.
+        No platform, no account, and no runtime dependency on Ostrun once it's generated.
       </p>
       <div class="cta-group">
-        <a class="btn btn-primary" href="https://github.com/ostrun-labs/ostrun">Voir le projet sur GitHub</a>
-        <code class="clone-cmd" tabindex="0">git clone github.com/ostrun-labs/ostrun</code>
+        <a class="btn btn-primary" href="https://github.com/ostrun-labs/ostrun">View the project on GitHub</a>
+        <code class="clone-cmd" tabindex="0">git clone https://github.com/ostrun-labs/ostrun</code>
       </div>
     </div>
 
@@ -36,21 +36,21 @@
       <div class="terminal" aria-hidden="true">
         <div class="terminal-bar">
           <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="terminal-title">ostrun generate</span>
+          <span class="terminal-title">ostrun generator</span>
         </div>
-        <pre class="terminal-body"><span class="ln"><span class="prompt">$</span> ostrun generate --services auth,mailer,billing</span>
-<span class="ln out">? Sélection : <span class="ok">auth</span>, <span class="ok">mailer</span>, <span class="ok">billing</span></span>
-<span class="ln out">✓ Contrat de service validé (manifest + events)</span>
-<span class="ln out">✓ Repo généré :</span>
-<span class="ln tree">  ./ostrun-app/
+        <pre class="terminal-body"><span class="ln"><span class="prompt">$</span> dotnet run --project generator -- app.json ./my-app</span>
+<span class="ln out">Cloning <span class="ok">ostrun/auth</span>, <span class="ok">ostrun/mailer</span>...</span>
+<span class="ln out">✓ Manifests validated</span>
+<span class="ln out">✓ Repo generated:</span>
+<span class="ln tree">  ./my-app/
   ├── gateway/
   ├── services/
-  │   ├── auth/
-  │   ├── mailer/
-  │   └── billing/
+  │   └── ostrun/
+  │       ├── auth/
+  │       └── mailer/
   ├── docker-compose.yml
   └── .env.example</span>
-<span class="ln out">✓ Prêt. <span class="muted">Aucune dépendance à Ostrun après génération.</span></span>
+<span class="ln out">✓ Done. <span class="muted">No dependency on Ostrun from here on.</span></span>
 <span class="ln"><span class="prompt">$</span> <span class="cursor"></span></span></pre>
       </div>
     </div>
@@ -59,41 +59,41 @@
   <main>
     <section class="section">
       <div class="container">
-        <h2>Le problème</h2>
+        <h2>The problem</h2>
         <p>
-          Démarrer un projet avec plusieurs services (auth, mailer, billing...) impose aujourd'hui un choix.
-          Tout écrire à la main, ou adopter une plateforme tout-en-un qui impose sa runtime et son couplage.
+          Starting a project with several services (auth, mailer, billing...) forces a choice today.
+          Write everything by hand, or adopt an all-in-one platform that brings its own runtime and coupling.
         </p>
         <p>
-          Ostrun se place entre les deux. Un point de départ possédé par le développeur, composé de briques
-          indépendantes respectant un contrat commun, sans lien avec Ostrun une fois le code généré.
+          Ostrun sits in between. You get a starting point you own, built from independent services
+          that honor a shared contract, with no tie back to Ostrun once the code is generated.
         </p>
       </div>
     </section>
 
-    <section class="section section-alt" id="principes">
+    <section class="section section-alt" id="principles">
       <div class="container">
-        <h2>Principes non négociables</h2>
+        <h2>Non-negotiable principles</h2>
         <ul class="principles">
           <li>
-            <strong>Indépendance stricte de chaque service</strong>
-            <span>Sa propre base de données, son propre repo, déployable seul.</span>
+            <strong>Strict independence per service</strong>
+            <span>Its own database, its own repo, deployable on its own.</span>
           </li>
           <li>
-            <strong>Communication par API ou events uniquement</strong>
-            <span>Jamais d'appel direct au code d'un autre service, jamais de base partagée.</span>
+            <strong>Communication through APIs or events only</strong>
+            <span>Never a direct call into another service's code, never a shared database.</span>
           </li>
           <li>
-            <strong>Polyglotte autorisé</strong>
-            <span>Tant que le contrat, manifeste et events, est respecté.</span>
+            <strong>Any language</strong>
+            <span>As long as the service honors the contract: manifest and events.</span>
           </li>
           <li>
-            <strong>Pas de gouvernance runtime</strong>
-            <span>La cohérence se fait à la conception, via PR et CI, jamais via un point central en exécution.</span>
+            <strong>No runtime governance</strong>
+            <span>Consistency happens at design time, through PRs and CI, never through a central service at runtime.</span>
           </li>
           <li>
-            <strong>Secrets jamais en dur</strong>
-            <span><code>.env</code> local ignoré par Git, <code>.env.example</code> committé.</span>
+            <strong>No hardcoded secrets</strong>
+            <span>A local <code>.env</code> that Git ignores, and a committed <code>.env.example</code>.</span>
           </li>
         </ul>
       </div>
@@ -101,11 +101,11 @@
 
     <section class="section">
       <div class="container">
-        <h2>Ce qu'Ostrun n'est pas</h2>
+        <h2>What Ostrun is not</h2>
         <ul class="plain-list">
-          <li>Pas une plateforme hébergée. Pas de compte, pas de backend Ostrun qui tourne en continu.</li>
-          <li>Pas un PaaS de déploiement. Ostrun génère du code, il ne l'exécute pas pour vous.</li>
-          <li>Pas un outil de synchronisation continue. Une fois généré, un repo vit sa vie.</li>
+          <li>Not a hosted platform. No account, and no Ostrun backend running somewhere.</li>
+          <li>Not a deployment PaaS. Ostrun generates code, it doesn't run it for you.</li>
+          <li>Not a sync tool. Once generated, the repo is yours to change.</li>
         </ul>
       </div>
     </section>
@@ -114,10 +114,10 @@
       <div class="container">
         <h2>MVP</h2>
         <ul class="plain-list">
-          <li><strong>Gateway.</strong> Point d'entrée unique, routage vers les services sélectionnés.</li>
-          <li><strong>Service Auth de référence.</strong> JWT, register et login.</li>
-          <li><strong>Bus d'events.</strong> RabbitMQ via MassTransit.</li>
-          <li><strong>Docker Compose généré.</strong> L'app complète démarre en local en une commande.</li>
+          <li><strong>Gateway.</strong> One entry point that routes to the selected services.</li>
+          <li><strong>Reference Auth service.</strong> JWT, register and login. Still in progress.</li>
+          <li><strong>Event bus.</strong> RabbitMQ through MassTransit.</li>
+          <li><strong>Generated Docker Compose.</strong> The whole app starts locally with one command.</li>
         </ul>
       </div>
     </section>
@@ -125,7 +125,7 @@
 
   <footer class="footer">
     <div class="container">
-      <p>Ostrun Labs — <a href="https://github.com/ostrun-labs/ostrun">github.com/ostrun-labs/ostrun</a></p>
+      <p>Ostrun Labs · <a href="https://github.com/ostrun-labs/ostrun">github.com/ostrun-labs/ostrun</a></p>
     </div>
   </footer>
 </body>
