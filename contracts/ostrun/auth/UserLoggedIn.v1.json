@@ -3,7 +3,7 @@
   "$id": "https://ostrun.dev/contracts/ostrun/auth/UserLoggedIn.v1.json",
   "title": "Ostrun.Auth.UserLoggedIn",
   "version": 1,
-  "description": "Publié par le service Auth à chaque connexion réussie.",
+  "description": "Published by the Auth service on every successful login.",
   "type": "object",
   "additionalProperties": false,
   "required": ["userId", "email", "loggedInAt"],
@@ -11,17 +11,17 @@
     "userId": {
       "type": "string",
       "format": "uuid",
-      "description": "Identifiant du compte connecté."
+      "description": "Id of the account that logged in."
     },
     "email": {
       "type": "string",
       "format": "email",
-      "description": "Adresse email du compte connecté."
+      "description": "Email address of the account that logged in."
     },
     "loggedInAt": {
       "type": "string",
       "format": "date-time",
-      "description": "Horodatage UTC de la connexion."
+      "description": "UTC timestamp of the login."
     }
   }
 }
