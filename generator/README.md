@@ -13,7 +13,7 @@ cat > app.json <<'EOF'
   "gatewayPort": 8080,
   "services": [
     { "ref": "ostrun/auth" },
-    { "ref": "ostrun/mailer" }
+    { "ref": "ostrun/notification" }
   ]
 }
 EOF
@@ -43,5 +43,5 @@ A bare `ref` is enough for a service listed in [`../catalog.json`](../catalog.js
 
 - One HTTP port per service (a `ports[]` with more than one entry fails validation).
 - No "ready-to-use" mode (`registry`): the generator always clones from `repository`.
-- No transitive dependency resolution: if `app.json` selects Mailer without Auth, validation fails instead of adding Auth automatically.
+- No transitive dependency resolution: if `app.json` selects Notification without Auth, validation fails instead of adding Auth automatically.
 - `catalog.json` is hand-maintained for now. No CI checks that it stays in sync with the real manifests of the services it lists, only its own structural validity (see `.github/workflows/ci.yml`).

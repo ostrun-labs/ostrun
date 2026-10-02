@@ -20,7 +20,7 @@ Before proposing a new service, keep the project's non-negotiable rules in mind:
 ## Adding a new service
 
 1. Choose a **provider**: a declarative identifier (free-form, not necessarily your GitHub handle) that identifies you as a contributor or maintainer. It must not collide with a provider someone else already uses. The maintainer checks this when reviewing your catalog PR.
-2. Create your service in **its own repo**. This repo holds no service code. There's no official template yet: [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service) and [`ostrun-mailer-service`](https://github.com/ostrun-labs/ostrun-mailer-service) are the working examples to copy from.
+2. Create your service in **its own repo**. This repo holds no service code. There's no official template yet: [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service) and [`ostrun-notification-service`](https://github.com/ostrun-labs/ostrun-notification-service) are the working examples to copy from.
 3. Add an `ostrun.manifest.json` at the root of your repo. Full spec and examples: [`/contracts/service-manifest.md`](./contracts/service-manifest.md).
 4. Make sure your service exposes `/health` and starts standalone via its own `Dockerfile`.
 5. **No hardcoded secrets** in code or the image. Use environment variables, loaded via `.env` locally, and provide a `.env.example` documenting the expected keys with no real values.
@@ -50,7 +50,7 @@ Every .NET service in the catalog targets the versions below. Use them as-is whe
 
 MassTransit stays on 8.4.1 on purpose. The 8.5 EF Core integration requires EF Core 9, and the services run on EF Core 8. Don't bump MassTransit or EF Core on its own in a single service. A version change to anything in this table goes through one PR per service repo, landed together, plus an update to this table.
 
-Libraries specific to one service (MailKit for the mailer, for example) are up to that service.
+Libraries specific to one service (MailKit for the notification service, for example) are up to that service.
 
 ## Adding or changing an event
 
