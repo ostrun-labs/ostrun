@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ostrun.dev/contracts/ostrun/mailer/EmailSent.v1.json",
-  "title": "Ostrun.Mailer.EmailSent",
+  "$id": "https://ostrun.dev/contracts/ostrun/notification/EmailSent.v1.json",
+  "title": "Ostrun.Notification.EmailSent",
   "version": 1,
-  "description": "Published by the Mailer service after it sends, or tries to send, an email triggered by an upstream event.",
+  "description": "Published by the Notification service after it sends an email triggered by an upstream event.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["userId", "email", "sourceEvent", "sentAtUtc"],
+  "required": ["userId", "email", "sourceEvent", "sentAt"],
   "properties": {
     "userId": {
       "type": "string",
@@ -22,7 +22,7 @@
       "type": "string",
       "description": "Full name of the upstream event that triggered this email (e.g. Ostrun.Auth.UserRegistered)."
     },
-    "sentAtUtc": {
+    "sentAt": {
       "type": "string",
       "format": "date-time",
       "description": "UTC timestamp of the send."

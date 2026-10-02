@@ -17,7 +17,7 @@ Please include, as much as possible:
 
 ## Scope
 
-Applies to the `ostrun` repo (gateway, generator, contracts) and the reference services `ostrun-auth-service` / `ostrun-mailer-service`. For a third-party service catalogued by someone else, contact its maintainer directly. Ostrun has no runtime governance service and cannot patch code it doesn't own.
+Applies to the `ostrun` repo (gateway, generator, contracts) and the reference services `ostrun-auth-service` / `ostrun-notification-service`. For a third-party service catalogued by someone else, contact its maintainer directly. Ostrun has no runtime governance service and cannot patch code it doesn't own.
 
 ## Response time
 

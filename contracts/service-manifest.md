@@ -17,7 +17,7 @@ In a generated app, the generator clones each service into `services/{provider}/
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `provider` | string | yes | Declarative identifier for the contributor/maintainer, PascalCase. Must match the `Provider` segment of published events. |
-| `service` | string | yes | Short service name, PascalCase if compound (`Auth`, `Mailer`, `OrderFulfillment`). |
+| `service` | string | yes | Short service name, PascalCase if compound (`Auth`, `Notification`, `OrderFulfillment`). |
 | `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). |
 | `displayName` | string | yes | Human-readable name of the service. |
 | `description` | string | yes | Short description shown in the catalog. |
@@ -77,17 +77,17 @@ In a generated app, the generator clones each service into `services/{provider}/
 }
 ```
 
-## Example: service with a dependency (Mailer)
+## Example: service with a dependency (Notification)
 
 ```json
 {
   "provider": "Ostrun",
-  "service": "mailer",
+  "service": "notification",
   "version": "1.0.0",
-  "displayName": "Mailer",
+  "displayName": "Notification",
   "description": "Sends emails triggered by other services' events.",
   "events": {
-    "published": ["Ostrun.Mailer.EmailSent"],
+    "published": ["Ostrun.Notification.EmailSent"],
     "consumed": ["Ostrun.Auth.UserRegistered"]
   },
   "env": [
@@ -106,7 +106,7 @@ In a generated app, the generator clones each service into `services/{provider}/
     "path": "/health",
     "method": "GET"
   },
-  "repository": "https://github.com/ostrun-labs/ostrun-mailer-service",
+  "repository": "https://github.com/ostrun-labs/ostrun-notification-service",
   "registry": null
 }
 ```

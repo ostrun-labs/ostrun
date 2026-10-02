@@ -7,8 +7,8 @@
       "rev": "main"
     },
     {
-      "ref": "ostrun/mailer",
-      "repository": "https://github.com/ostrun-labs/ostrun-mailer-service",
+      "ref": "ostrun/notification",
+      "repository": "https://github.com/ostrun-labs/ostrun-notification-service",
       "rev": "main"
     },
     {

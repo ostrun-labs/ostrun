@@ -2,7 +2,7 @@
 
 Ostrun is a service catalog and one-shot generator for building microservice backends. You pick services from [`catalog.json`](./catalog.json), the generator (`generator/`) clones them, validates their manifests, and emits a standalone repo, `docker-compose.yml`, gateway routes, `.env.example`, with no runtime dependency back on Ostrun.
 
-This repo itself ships no service code. Services live in their own repos (e.g. `ostrun-auth-service`, `ostrun-mailer-service`). Ostrun only holds the gateway skeleton, the generator, and the event/manifest contracts that keep those independent services interoperable.
+This repo itself ships no service code. Services live in their own repos (e.g. `ostrun-auth-service`, `ostrun-notification-service`). Ostrun only holds the gateway skeleton, the generator, and the event/manifest contracts that keep those independent services interoperable.
 
 ## What makes Ostrun special
 
