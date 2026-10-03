@@ -93,7 +93,11 @@ public static class ComposeGenerator
             }
 
             var varName = Naming.EnvVar(key, env.Name);
-            sb.AppendLine($"      {env.Name}: ${{{varName}}}");
+            // Compose sets a variable that is empty or missing from .env to "",
+            // which .NET can't bind to an int/bool, so the service crashes on
+            // startup. ":-" falls back to the manifest default in that case.
+            var reference = env.Default is null ? varName : $"{varName}:-{env.Default}";
+            sb.AppendLine($"      {env.Name}: ${{{reference}}}");
         }
 
         if (eventBusNeeded && svc.Manifest.Env.Any(e => e.Name.StartsWith("RabbitMq__", StringComparison.Ordinal)))
