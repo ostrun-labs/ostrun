@@ -2,18 +2,38 @@ using System.Diagnostics;
 using System.Text.Json;
 using OstrunGenerator;
 
-if (args.Length < 2 || args[0] is "-h" or "--help")
+const string usage = "Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]";
+
+var positional = new List<string>();
+string? catalogPath = null;
+for (var i = 0; i < args.Length; i++)
 {
-    Console.WriteLine("Usage: dotnet run --project generator -- <app.json> <output-dir>");
+    switch (args[i])
+    {
+        case "-h" or "--help":
+            Console.WriteLine(usage);
+            return 0;
+        case "--catalog" when i + 1 < args.Length:
+            catalogPath = args[++i];
+            break;
+        default:
+            positional.Add(args[i]);
+            break;
+    }
+}
+
+if (positional.Count != 2)
+{
+    Console.Error.WriteLine(usage);
     return 1;
 }
 
-var appJsonPath = args[0];
-var outputDir = args[1];
+var appJsonPath = positional[0];
+var outputDir = positional[1];
 
 try
 {
-    Run(appJsonPath, outputDir);
+    Run(appJsonPath, outputDir, catalogPath);
     return 0;
 }
 catch (GenerationException ex)
@@ -22,19 +42,21 @@ catch (GenerationException ex)
     return 1;
 }
 
-static void Run(string appJsonPath, string outputDir)
+static void Run(string appJsonPath, string outputDir, string? catalogPath)
 {
+    // The gateway skeleton and catalog.json are copied next to the binary at build time (see OstrunGenerator.csproj).
+    var bundleDir = AppContext.BaseDirectory;
+
     var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     var app = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(appJsonPath), jsonOptions)
         ?? throw new GenerationException($"{appJsonPath}: could not parse app config.");
 
+    var catalog = LoadCatalog(catalogPath ?? Path.Combine(bundleDir, "catalog.json"), jsonOptions);
+
     Directory.CreateDirectory(outputDir);
     var servicesDir = Path.Combine(outputDir, "services");
     Directory.CreateDirectory(servicesDir);
-
-    var repoRoot = FindRepoRoot();
-    var catalog = LoadCatalog(repoRoot, jsonOptions);
 
     var resolved = new List<ResolvedService>();
     foreach (var serviceRef in app.Services)
@@ -62,7 +84,7 @@ static void Run(string appJsonPath, string outputDir)
 
     var eventBusNeeded = resolved.Any(s => s.Manifest.Events.Published.Count > 0 || s.Manifest.Events.Consumed.Count > 0);
 
-    var gatewaySkeletonDir = Path.Combine(repoRoot, "gateway");
+    var gatewaySkeletonDir = Path.Combine(bundleDir, "gateway");
     Console.WriteLine($"Copying gateway skeleton from {gatewaySkeletonDir}...");
     CopyGatewaySkeleton(gatewaySkeletonDir, Path.Combine(outputDir, "gateway"));
 
@@ -83,12 +105,11 @@ static void Run(string appJsonPath, string outputDir)
     Console.WriteLine("  docker compose up --build -d");
 }
 
-static Catalog LoadCatalog(string repoRoot, JsonSerializerOptions jsonOptions)
+static Catalog LoadCatalog(string catalogPath, JsonSerializerOptions jsonOptions)
 {
-    var catalogPath = Path.Combine(repoRoot, "catalog.json");
     if (!File.Exists(catalogPath))
     {
-        return new Catalog();
+        throw new GenerationException($"{catalogPath}: catalog not found.");
     }
 
     return JsonSerializer.Deserialize<Catalog>(File.ReadAllText(catalogPath), jsonOptions)
@@ -151,25 +172,6 @@ static void RunGit(IEnumerable<string> arguments)
     {
         throw new GenerationException($"git {string.Join(' ', arguments)} failed:\n{process.StandardError.ReadToEnd()}");
     }
-}
-
-static string FindRepoRoot()
-{
-    // ostrun/generator/bin/Debug/net8.0 -> walk up looking for catalog.json,
-    // which lives at the ostrun repo root next to gateway/. Works whether
-    // run via `dotnet run` (cwd = generator/) or the built exe (cwd = bin
-    // output).
-    var dir = new DirectoryInfo(AppContext.BaseDirectory);
-    while (dir is not null)
-    {
-        if (File.Exists(Path.Combine(dir.FullName, "catalog.json")))
-        {
-            return dir.FullName;
-        }
-        dir = dir.Parent;
-    }
-
-    throw new GenerationException("Could not locate the ostrun repo root (catalog.json not found in any parent directory).");
 }
 
 static void CopyGatewaySkeleton(string sourceDir, string targetDir)
