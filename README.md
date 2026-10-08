@@ -17,7 +17,7 @@ cat > app.json <<'EOF'
   "gatewayPort": 8080,
   "services": [
     { "ref": "ostrun/auth" },
-    { "ref": "ostrun/notification" }
+    { "ref": "ostrun/messaging" }
   ]
 }
 EOF

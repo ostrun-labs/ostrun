@@ -7,7 +7,7 @@
       "rev": "main"
     },
     {
-      "ref": "ostrun/notification",
+      "ref": "ostrun/messaging",
       "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
       "rev": "main"
     },

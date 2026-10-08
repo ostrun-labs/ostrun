@@ -50,7 +50,7 @@ Every .NET service in the catalog targets the versions below. Use them as-is whe
 
 MassTransit stays on 8.4.1 on purpose. The 8.5 EF Core integration requires EF Core 9, and the services run on EF Core 8. Don't bump MassTransit or EF Core on its own in a single service. A version change to anything in this table goes through one PR per service repo, landed together, plus an update to this table.
 
-Libraries specific to one service (MailKit for the notification service, for example) are up to that service.
+Libraries specific to one service (MailKit for the messaging service, for example) are up to that service.
 
 ## Adding or changing an event
 
