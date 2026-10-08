@@ -29,4 +29,4 @@ There's no dedicated moderation team for now. The project is maintained by a sin
 
 ## Scope
 
-Applies to issues, pull requests, discussions, and any official project space (the `ostrun`, `ostrun-auth-service`, `ostrun-notification-service` repos, and any future officially catalogued repo).
+Applies to issues, pull requests, discussions, and any official project space (the `ostrun`, `ostrun-auth-service`, `ostrun-messaging-service` repos, and any future officially catalogued repo).

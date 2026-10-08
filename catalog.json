@@ -8,7 +8,7 @@
     },
     {
       "ref": "ostrun/notification",
-      "repository": "https://github.com/ostrun-labs/ostrun-notification-service",
+      "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
       "rev": "main"
     },
     {

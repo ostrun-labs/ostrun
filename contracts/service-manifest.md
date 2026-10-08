@@ -106,7 +106,7 @@ In a generated app, the generator clones each service into `services/{provider}/
     "path": "/health",
     "method": "GET"
   },
-  "repository": "https://github.com/ostrun-labs/ostrun-notification-service",
+  "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
   "registry": null
 }
 ```
