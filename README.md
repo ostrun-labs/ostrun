@@ -17,7 +17,7 @@ cat > app.json <<'EOF'
   "gatewayPort": 8080,
   "services": [
     { "ref": "ostrun/auth" },
-    { "ref": "ostrun/notification" }
+    { "ref": "ostrun/messaging" }
   ]
 }
 EOF
@@ -49,7 +49,7 @@ What the generator does and its known limits: [`generator/README.md`](./generato
 CONTRIBUTING.md, LICENSE
 ```
 
-This repo contains no service code: each cataloged service lives in its own independent repo, e.g. [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service) and [`ostrun-notification-service`](https://github.com/ostrun-labs/ostrun-notification-service).
+This repo contains no service code: each cataloged service lives in its own independent repo, e.g. [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service) and [`ostrun-messaging-service`](https://github.com/ostrun-labs/ostrun-messaging-service).
 
 ## Documentation
 

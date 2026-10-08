@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ostrun.dev/contracts/ostrun/notification/EmailSent.v1.json",
-  "title": "Ostrun.Notification.EmailSent",
+  "$id": "https://ostrun.dev/contracts/ostrun/messaging/EmailSent.v1.json",
+  "title": "Ostrun.Messaging.EmailSent",
   "version": 1,
-  "description": "Published by the Notification service after it sends an email triggered by an upstream event.",
+  "description": "Published by the Messaging service after it sends an email triggered by an upstream event.",
   "type": "object",
   "additionalProperties": false,
   "required": ["userId", "email", "sourceEvent", "sentAt"],
