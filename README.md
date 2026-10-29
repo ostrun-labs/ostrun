@@ -33,7 +33,6 @@ EOF
 dotnet run --project generator -- app.json ./my-app
 
 cd my-app
-cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 

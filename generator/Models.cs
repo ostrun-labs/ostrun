@@ -106,6 +106,11 @@ public sealed class EnvVar
 
     [JsonPropertyName("default")]
     public string? Default { get; init; }
+
+    // "password" | "rsa-private-key" | "app-name": the generator fills in a
+    // dev value instead of "change-me". See DevValues.
+    [JsonPropertyName("generate")]
+    public string? Generate { get; init; }
 }
 
 public sealed class PortEntry

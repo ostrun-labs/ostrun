@@ -31,7 +31,6 @@ dotnet run --project generator -- app.json ./my-app
 ostrun app.json ./my-app
 
 cd my-app
-cp .env.example .env   # fill in every "change-me"
 docker compose up --build -d
 ```
 
@@ -60,6 +59,8 @@ To pick up a new local build, run `dotnet tool uninstall -g Ostrun.Cli` first, o
 5. Generates `docker-compose.yml`: one `{key}-api` service per selected service, a `{key}-db` if `needsDb`, a `rabbitmq` if at least one service publishes or consumes events. No host port published besides the gateway's.
 6. Generates `gateway/routes.generated.json`: a catch-all route plus a dedicated health route per service (the health check always lives at an absolute path on the container, independent of `basePath`).
 7. Generates `.env.example`: the union of each manifest's `env[]`, prefixed per service, excluding anything derivable (connection strings, `ASPNETCORE_URLS`, RabbitMQ config).
+
+Both files carry the same dev values, computed once per generation (`DevValues.cs`), so `docker compose up` works with no `.env`. Every variable in `docker-compose.yml` is written as `${NAME:-value}`, and a value in `.env` overrides it. The value of an `env` entry is, in order: its `generate` kind (`password`, `rsa-private-key`, `app-name`), its `default`, `change-me` if required, otherwise empty. Postgres and RabbitMQ passwords are random. Nothing is hardcoded, so two generated apps never share a secret.
 
 ## Known limits (MVP)
 
