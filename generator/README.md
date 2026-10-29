@@ -6,6 +6,14 @@ It packs as a .NET tool named `ostrun`. The tool isn't on nuget.org yet, so for 
 
 ## Usage
 
+Prerequisites: the .NET 8 SDK, Docker (with Compose) and Git. To run from source, clone this repo first:
+
+```bash
+git clone https://github.com/ostrun-labs/ostrun.git && cd ostrun
+```
+
+Then, from the repo root:
+
 ```bash
 cat > app.json <<'EOF'
 {

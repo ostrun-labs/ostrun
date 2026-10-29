@@ -8,6 +8,14 @@ Technical showcase built to demonstrate a production-shaped distributed architec
 
 ## Quickstart
 
+You need the [.NET 8 SDK](https://dotnet.microsoft.com/download), [Docker](https://docs.docker.com/get-docker/) (with Compose) and [Git](https://git-scm.com/downloads).
+
+Clone Ostrun first, since the generator runs from the repo:
+
+```bash
+git clone https://github.com/ostrun-labs/ostrun.git && cd ostrun
+```
+
 Available services are listed in [`catalog.json`](./catalog.json). No need to know their repo URL, just their `ref` (`{provider}/{service}`):
 
 ```bash
