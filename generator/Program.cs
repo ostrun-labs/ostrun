@@ -88,20 +88,21 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath)
     Console.WriteLine($"Copying gateway skeleton from {gatewaySkeletonDir}...");
     CopyGatewaySkeleton(gatewaySkeletonDir, Path.Combine(outputDir, "gateway"));
 
+    var values = DevValues.Resolve(app, resolved, eventBusNeeded);
+
     Console.WriteLine("Generating docker-compose.yml...");
-    File.WriteAllText(Path.Combine(outputDir, "docker-compose.yml"), ComposeGenerator.Generate(app, resolved, eventBusNeeded));
+    File.WriteAllText(Path.Combine(outputDir, "docker-compose.yml"), ComposeGenerator.Generate(app, resolved, eventBusNeeded, values));
 
     Console.WriteLine("Generating gateway/routes.generated.json...");
     File.WriteAllText(Path.Combine(outputDir, "gateway", "routes.generated.json"), RoutesGenerator.Generate(resolved));
 
     Console.WriteLine("Generating .env.example...");
-    File.WriteAllText(Path.Combine(outputDir, ".env.example"), EnvExampleGenerator.Generate(app, resolved, eventBusNeeded));
+    File.WriteAllText(Path.Combine(outputDir, ".env.example"), EnvExampleGenerator.Generate(app, resolved, eventBusNeeded, values));
 
     File.WriteAllText(Path.Combine(outputDir, ".gitignore"), ".env\nservices/\n");
 
     Console.WriteLine();
     Console.WriteLine($"Done. Next steps in {outputDir}:");
-    Console.WriteLine("  cp .env.example .env   # fill in every \"change-me\"");
     Console.WriteLine("  docker compose up --build -d");
 }
 
