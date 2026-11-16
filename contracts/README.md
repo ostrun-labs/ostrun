@@ -104,14 +104,15 @@ These cases will become the CI script's test suite once it covers the full spec.
 
 Specification validated on 2026-08-17.
 
-What CI enforces today (`validate-contracts` job):
+What CI enforces today (`validate-contracts` job) on the contract files:
 
 - §2.1 structure regex
 - §2.4 past participle warning (a `::warning` annotation on the PR, exit code stays 0)
 - §2.5 command blocklist
 - §2.6: file name matches the entity, `title` provider and service match the directory, file version matches `version`.
 
+`ostrun validate <service-dir> --contracts <dir>` checks a manifest against the contracts: §2.1, §2.4 and §2.5 on each name in `events.published`/`events.consumed`, a contract file for each, and §2.2 provider consistency (plus the service segment) for `events.published`. No CI job runs it yet.
+
 Checked by hand in review until CI covers them:
 
-- §2.2 provider consistency with the manifest
 - §2.3 provider collision

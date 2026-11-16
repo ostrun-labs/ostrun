@@ -5,7 +5,9 @@ namespace OstrunGenerator;
 
 // Rules for the event contract files under /contracts (contracts/README.md
 // §2.1, §2.4, §2.5, §2.6): the ones that need only the contract itself, not
-// a manifest. Used by `ostrun validate --contracts <dir>`.
+// a manifest. Used by `ostrun validate --contracts <dir>`. CheckEventName and
+// LoadIrregularParticiples are also what ManifestEvents applies to the names
+// in a manifest, so both sides share one set of name rules.
 public static partial class ContractRules
 {
     [GeneratedRegex(@"^[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9]*$")]
@@ -30,10 +32,7 @@ public static partial class ContractRules
             throw new GenerationException($"{contractsDir}: contracts directory not found.");
         }
 
-        var irregularPath = Path.Combine(contractsDir, "_verbs", "irregular-participles.txt");
-        var irregular = File.Exists(irregularPath)
-            ? File.ReadAllLines(irregularPath).Select(l => l.Trim()).Where(l => l != "").ToHashSet()
-            : [];
+        var irregular = LoadIrregularParticiples(contractsDir);
 
         var result = new Result([], []);
         var files = Directory.EnumerateFiles(contractsDir, "*.v*.json", SearchOption.AllDirectories)
@@ -50,6 +49,43 @@ public static partial class ContractRules
         }
 
         return result;
+    }
+
+    public static HashSet<string> LoadIrregularParticiples(string contractsDir)
+    {
+        var path = Path.Combine(contractsDir, "_verbs", "irregular-participles.txt");
+        return File.Exists(path)
+            ? File.ReadAllLines(path).Select(l => l.Trim()).Where(l => l != "").ToHashSet()
+            : [];
+    }
+
+    // §2.1 structure, §2.5 command blocklist (errors) and §2.4 participle
+    // heuristic (warning) on a full event name. `WellFormed` is false when the
+    // structure fails, since the other rules need the 3 segments.
+    public static (List<string> Errors, List<string> Warnings, bool WellFormed) CheckEventName(
+        string name, IReadOnlySet<string> irregularParticiples)
+    {
+        var errors = new List<string>();
+        var warnings = new List<string>();
+
+        if (!EventName().IsMatch(name))
+        {
+            errors.Add($"'{name}' must be {{Provider}}.{{Service}}.{{Entity}}{{PastParticiple}}, 3 PascalCase segments");
+            return (errors, warnings, false);
+        }
+
+        var last = name.Split('.')[2];
+        var command = Command().Match(last);
+        if (command.Success)
+        {
+            errors.Add($"'{name}' ends with the verb '{command.Value}', which reads as a command; name the fact in the past participle");
+        }
+        else if (!last.EndsWith("ed") && !irregularParticiples.Any(p => last.EndsWith(p)))
+        {
+            warnings.Add($"'{last}' doesn't look like a known past participle; if it is one, add it to contracts/_verbs/irregular-participles.txt");
+        }
+
+        return (errors, warnings, true);
     }
 
     // `relativePath` is the file's path under the contracts dir, '/'-separated.
@@ -93,10 +129,11 @@ public static partial class ContractRules
             errors.Add($"filename version 'v{fileMatch.Groups["version"].Value}' does not match schema version '{version}'");
         }
 
-        // §2.1: past this point the title has exactly 3 segments.
-        if (!EventName().IsMatch(title))
+        var (nameErrors, nameWarnings, wellFormed) = CheckEventName(title, irregularParticiples);
+        errors.AddRange(nameErrors);
+        warnings.AddRange(nameWarnings);
+        if (!wellFormed)
         {
-            errors.Add($"title '{title}' must be {{Provider}}.{{Service}}.{{Entity}}{{PastParticiple}}, 3 PascalCase segments");
             return (errors, warnings);
         }
 
@@ -112,17 +149,6 @@ public static partial class ContractRules
         if (segments[2] != fileMatch.Groups["entity"].Value)
         {
             errors.Add($"title entity '{segments[2]}' does not match filename '{fileMatch.Groups["entity"].Value}'");
-        }
-
-        var last = segments[2];
-        var command = Command().Match(last);
-        if (command.Success)
-        {
-            errors.Add($"'{title}' ends with the verb '{command.Value}', which reads as a command; name the fact in the past participle");
-        }
-        else if (!last.EndsWith("ed") && !irregularParticiples.Any(p => last.EndsWith(p)))
-        {
-            warnings.Add($"'{last}' doesn't look like a known past participle; if it is one, add it to contracts/_verbs/irregular-participles.txt");
         }
 
         return (errors, warnings);

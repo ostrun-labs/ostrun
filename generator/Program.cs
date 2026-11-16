@@ -4,7 +4,7 @@ using OstrunGenerator;
 
 const string usage = """
     Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]
-           ostrun validate <service-dir>
+           ostrun validate <service-dir> [--contracts <contracts-dir>]
            ostrun validate --contracts <contracts-dir>
     """;
 
@@ -37,7 +37,7 @@ if (contractsDir is not null && positional is ["validate"])
 
 if (positional.Count == 2 && positional[0] == "validate")
 {
-    return ValidateService(positional[1]);
+    return ValidateService(positional[1], contractsDir);
 }
 
 if (positional.Count != 2)
@@ -92,12 +92,22 @@ static int ValidateContracts(string contractsDir)
     }
 }
 
-static int ValidateService(string serviceDir)
+static int ValidateService(string serviceDir, string? contractsDir)
 {
     try
     {
         var manifest = ManifestLoader.Load(Path.Combine(serviceDir, "ostrun.manifest.json"), serviceDir);
         var errors = ManifestRules.Check(manifest, serviceDir);
+        if (contractsDir is not null)
+        {
+            var events = ManifestEvents.Check(manifest, contractsDir, serviceDir);
+            errors.AddRange(events.Errors);
+            foreach (var warning in events.Warnings)
+            {
+                Console.WriteLine($"  warning: {warning}");
+            }
+        }
+
         if (errors.Count > 0)
         {
             foreach (var error in errors)
