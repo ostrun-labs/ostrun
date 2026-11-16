@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.Json;
 using OstrunGenerator;
 
@@ -6,6 +5,7 @@ const string usage = """
     Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]
            ostrun validate <service-dir> [--contracts <contracts-dir>]
            ostrun validate --contracts <contracts-dir>
+           ostrun validate --catalog <catalog.json> --contracts <contracts-dir>
     """;
 
 var positional = new List<string>();
@@ -28,6 +28,11 @@ for (var i = 0; i < args.Length; i++)
             positional.Add(args[i]);
             break;
     }
+}
+
+if (catalogPath is not null && contractsDir is not null && positional is ["validate"])
+{
+    return ValidateCatalog(catalogPath, contractsDir);
 }
 
 if (contractsDir is not null && positional is ["validate"])
@@ -127,6 +132,101 @@ static int ValidateService(string serviceDir, string? contractsDir)
     }
 }
 
+static int ValidateCatalog(string catalogPath, string contractsDir)
+{
+    var inActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true";
+    var errors = new List<string>();
+
+    try
+    {
+        if (!File.Exists(catalogPath))
+        {
+            throw new GenerationException($"{catalogPath}: catalog not found.");
+        }
+
+        var json = File.ReadAllText(catalogPath);
+        errors.AddRange(CatalogRules.CheckStructure(json));
+
+        // Entries are only cloned once the catalog is well formed.
+        if (errors.Count == 0)
+        {
+            var catalog = JsonSerializer.Deserialize<Catalog>(json, ManifestLoader.JsonOptions)!;
+            var providers = new List<(string Label, string Provider)>();
+            var workDir = Path.Combine(Path.GetTempPath(), "ostrun-catalog-" + Path.GetRandomFileName());
+            try
+            {
+                foreach (var entry in catalog.Services)
+                {
+                    ValidateCatalogEntry(entry, Path.Combine(workDir, entry.Ref), contractsDir, errors, providers);
+                }
+            }
+            finally
+            {
+                if (Directory.Exists(workDir))
+                {
+                    ServiceCloner.DeleteDirectory(workDir);
+                }
+            }
+
+            errors.AddRange(CatalogRules.CheckProviderCollisions(providers));
+        }
+    }
+    catch (GenerationException ex)
+    {
+        errors.Add(ex.Message);
+    }
+
+    foreach (var error in errors)
+    {
+        // Annotations show on the PR in GitHub Actions; plain lines elsewhere.
+        Console.Error.WriteLine(inActions ? $"::error file={catalogPath}::{error.ReplaceLineEndings(" ")}" : $"error: {error}");
+    }
+
+    if (errors.Count > 0)
+    {
+        return 1;
+    }
+
+    Console.WriteLine("OK");
+    return 0;
+}
+
+static void ValidateCatalogEntry(
+    CatalogEntry entry, string cloneDir, string contractsDir, List<string> errors, List<(string Label, string Provider)> providers)
+{
+    Console.WriteLine($"Validating {entry.Ref} ({entry.Repository} @ {entry.Rev})...");
+    try
+    {
+        ServiceCloner.Clone(entry.Repository, entry.Rev, cloneDir);
+        var manifest = ManifestLoader.Load(Path.Combine(cloneDir, "ostrun.manifest.json"), entry.Ref);
+
+        errors.AddRange(ManifestRules.Check(manifest, entry.Ref));
+        var events = ManifestEvents.Check(manifest, contractsDir, entry.Ref);
+        errors.AddRange(events.Errors);
+        foreach (var warning in events.Warnings)
+        {
+            Console.WriteLine($"  warning: {warning}");
+        }
+
+        // Same comparison as Validation.Validate does for an app.json ref.
+        var refParts = entry.Ref.Split('/');
+        if (manifest.Provider.ToLowerInvariant() != refParts[0])
+        {
+            errors.Add($"{entry.Ref}: manifest provider '{manifest.Provider}' does not match the catalog ref.");
+        }
+        if (manifest.Service != refParts[1])
+        {
+            errors.Add($"{entry.Ref}: manifest service '{manifest.Service}' does not match the catalog ref.");
+        }
+
+        providers.Add((entry.Ref, manifest.Provider));
+    }
+    catch (GenerationException ex)
+    {
+        errors.Add(ex.Message);
+    }
+}
+
 static void Run(string appJsonPath, string outputDir, string? catalogPath)
 {
     // The gateway skeleton and catalog.json are copied next to the binary at build time (see OstrunGenerator.csproj).
@@ -150,7 +250,7 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath)
 
         var cloneDir = Path.Combine(servicesDir, serviceRef.Ref);
         Console.WriteLine($"Cloning {serviceRef.Ref} from {repository} ({rev})...");
-        CloneService(repository, rev, cloneDir);
+        ServiceCloner.Clone(repository, rev, cloneDir);
 
         var manifest = ManifestLoader.Load(Path.Combine(cloneDir, "ostrun.manifest.json"), serviceRef.Ref);
 
@@ -209,48 +309,6 @@ static (string Repository, string Rev) ResolveRepository(ServiceRef serviceRef, 
         ?? throw new GenerationException($"{serviceRef.Ref}: not in catalog.json and no repository given in app.json. Either add it to the catalog or specify \"repository\" directly.");
 
     return (entry.Repository, serviceRef.Rev ?? entry.Rev);
-}
-
-static void CloneService(string repository, string rev, string targetDir)
-{
-    if (Directory.Exists(targetDir))
-    {
-        DeleteDirectory(targetDir);
-    }
-
-    RunGit(["clone", "--depth", "1", "--branch", rev, repository, targetDir]);
-}
-
-static void DeleteDirectory(string path)
-{
-    // git's pack files are read-only on Windows; Directory.Delete throws
-    // UnauthorizedAccessException on them unless the attribute is cleared
-    // first.
-    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
-    {
-        File.SetAttributes(file, FileAttributes.Normal);
-    }
-    Directory.Delete(path, recursive: true);
-}
-
-static void RunGit(IEnumerable<string> arguments)
-{
-    var psi = new ProcessStartInfo("git")
-    {
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-    };
-    foreach (var arg in arguments)
-    {
-        psi.ArgumentList.Add(arg);
-    }
-
-    using var process = Process.Start(psi) ?? throw new GenerationException("Could not start git.");
-    process.WaitForExit();
-    if (process.ExitCode != 0)
-    {
-        throw new GenerationException($"git {string.Join(' ', arguments)} failed:\n{process.StandardError.ReadToEnd()}");
-    }
 }
 
 static void CopyGatewaySkeleton(string sourceDir, string targetDir)

@@ -104,6 +104,8 @@ These cases will become the CI script's test suite once it covers the full spec.
 
 Specification validated on 2026-08-17.
 
+The `validate-catalog` job also enforces §2.3: providers equal case-insensitively but not exactly across all catalogued manifests fail, with a note that the maintainer decides.
+
 What CI enforces today (`validate-contracts` job) on the contract files:
 
 - §2.1 structure regex
@@ -111,8 +113,7 @@ What CI enforces today (`validate-contracts` job) on the contract files:
 - §2.5 command blocklist
 - §2.6: file name matches the entity, `title` provider and service match the directory, file version matches `version`.
 
-`ostrun validate <service-dir> --contracts <dir>` checks a manifest against the contracts: §2.1, §2.4 and §2.5 on each name in `events.published`/`events.consumed`, a contract file for each, and §2.2 provider consistency (plus the service segment) for `events.published`. No CI job runs it yet.
+`ostrun validate <service-dir> --contracts <dir>` checks a manifest against the contracts: §2.1, §2.4 and §2.5 on each name in `events.published`/`events.consumed`, a contract file for each, and §2.2 provider consistency (plus the service segment) for `events.published`. The `validate-catalog` job runs it on every `catalog.json` entry (`ostrun validate --catalog catalog.json --contracts contracts`), after cloning each service at its `rev`, and also checks the manifest's `provider`/`service` against the entry's `ref`.
 
 Checked by hand in review until CI covers them:
 
-- §2.3 provider collision

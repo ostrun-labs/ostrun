@@ -44,9 +44,9 @@ The rest of this document is meant to help you navigate the repo and make change
 - `generator/` is the .NET console app (`dotnet run --project generator -- app.json ./output`). Resolves refs, clones services, validates manifests, emits compose + gateway routes + `.env.example`. See [`generator/README.md`](./generator/README.md) for the full pipeline and known MVP limits.
 - `gateway/` is a YARP skeleton, copied verbatim into generated apps. Not a running service in this repo; it has no business logic of its own, only routing config that the generator overwrites (`routes.generated.json`).
 - `contracts/` holds event schemas (versioned, `/contracts/{provider}/{service}/{Entity}{PastParticiple}.v1.json`) and the service manifest spec. This is the most sensitive part of the repo, see naming rules below.
-- `catalog.json` is a hand-maintained list of catalogable services (`ref` → `repository`/`rev`). No CI currently checks it stays in sync with the manifests of the services it lists, only its own structural validity.
+- `catalog.json` is a hand-maintained list of catalogable services (`ref` → `repository`/`rev`). The `validate-catalog` CI job clones each entry and validates its manifest against `/contracts`.
 - `brainstorm/` is the maintainer's local folder for design notes, PRDs and roadmap. It isn't committed, so it only exists in the maintainer's checkout. If it's there, read it for rationale, but don't treat it as current-state documentation; it can be stale relative to the code.
-- `.github/workflows/ci.yml` runs contract and catalog validation.
+- `.github/workflows/ci.yml` runs contract and catalog validation (`ostrun validate`).
 
 ## Event and manifest rules
 
@@ -69,7 +69,7 @@ These are enforced by CI and reviewed strictly. Don't loosen them without mainta
 - `dotnet build` for `gateway/` and `generator/` individually; there's no top-level solution orchestrating both.
 - `dotnet test generator.Tests` runs the generator unit tests (CI runs it in `build-generator`).
 - To exercise the generator end-to-end, run it against a real `app.json` selecting one or two catalog services and confirm `docker-compose.yml`, `gateway/routes.generated.json`, and `.env.example` come out correct. This repo has no automated integration test for that path yet, so a manual run is the proof.
-- CI (`.github/workflows/ci.yml`) validates `/contracts` and `catalog.json` structure. Don't bypass it; if a change needs CI relaxed, say so explicitly rather than routing around it.
+- CI (`.github/workflows/ci.yml`) validates `/contracts` and every `catalog.json` entry. Don't bypass it; if a change needs CI relaxed, say so explicitly rather than routing around it.
 - No live dev server or database in this repo to protect. Unlike a running product, there's nothing here that stays up between sessions. The generator is a one-shot CLI; run it freely.
 
 ## Pull requests
