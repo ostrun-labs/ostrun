@@ -1,0 +1,32 @@
+# Reusable workflow: a service repo calls this from its own CI to validate its
+# ostrun.manifest.json and events against ostrun's current rules and contracts.
+#
+#   jobs:
+#     validate:
+#       uses: ostrun-labs/ostrun/.github/workflows/validate-service.yml@main
+name: Validate service
+
+on:
+  workflow_call:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      # The calling service repo.
+      - uses: actions/checkout@v4
+
+      - name: Checkout ostrun
+        uses: actions/checkout@v4
+        with:
+          repository: ostrun-labs/ostrun
+          ref: main
+          path: ostrun
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Validate service
+        run: dotnet run --project ostrun/generator -- validate . --contracts ostrun/contracts
