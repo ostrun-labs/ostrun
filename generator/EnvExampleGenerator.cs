@@ -27,6 +27,11 @@ public static class EnvExampleGenerator
         sb.AppendLine();
         sb.AppendLine("# ---- app ----------------------------------------------------------------");
         sb.AppendLine($"GATEWAY_PORT={values.Items["GATEWAY_PORT"]}");
+        if (values.Items.TryGetValue(DevValues.MailpitPortVar, out var mailpitPort))
+        {
+            sb.AppendLine("# Host port of the Mailpit web UI, where the emails sent by the app show up.");
+            sb.AppendLine($"{DevValues.MailpitPortVar}={mailpitPort}");
+        }
         sb.AppendLine();
 
         if (eventBusNeeded)

@@ -71,4 +71,60 @@ public class ProdModeTests
         Assert.DoesNotContain(":?", compose);
         Assert.DoesNotContain("change-me", env);
     }
+
+    private static ResolvedService Messaging() => new(
+        "ostrun/messaging",
+        new ServiceRef { Ref = "ostrun/messaging" },
+        new ServiceManifest
+        {
+            Provider = "Ostrun",
+            Service = "messaging",
+            NeedsSmtp = true,
+            Ports = [new PortEntry { ContainerPort = 8080 }],
+            Env =
+            [
+                new EnvVar { Name = "Smtp__Host", Required = true, Smtp = "host" },
+                new EnvVar { Name = "Smtp__Port", Required = true, Smtp = "port" },
+            ],
+        });
+
+    private static (string Compose, string Env) EmitWith(ResolvedService svc, bool prod)
+    {
+        var services = new List<ResolvedService> { svc };
+        var values = DevValues.Resolve(App, services, eventBusNeeded: false, prod);
+        return (
+            ComposeGenerator.Generate(App, services, false, values),
+            EnvExampleGenerator.Generate(App, services, false, values, prod));
+    }
+
+    [Fact]
+    public void Dev_adds_mailpit_for_needsSmtp_and_points_the_entries_at_it()
+    {
+        var (compose, env) = EmitWith(Messaging(), prod: false);
+
+        Assert.Contains("  mailpit:", compose);
+        Assert.Contains("image: axllent/mailpit", compose);
+        Assert.Contains("${MAILPIT_PORT:-8025}:8025", compose);
+        Assert.Contains("MESSAGING_SMTP_HOST:-mailpit}", compose);
+        Assert.Contains("MESSAGING_SMTP_PORT:-1025}", compose);
+        Assert.Contains("MAILPIT_PORT=8025", env);
+    }
+
+    [Fact]
+    public void Prod_has_no_mailpit_and_requires_the_smtp_entries()
+    {
+        var (compose, _) = EmitWith(Messaging(), prod: true);
+
+        Assert.DoesNotContain("mailpit", compose);
+        Assert.Contains("MESSAGING_SMTP_HOST:?", compose);
+    }
+
+    [Fact]
+    public void No_mailpit_without_needsSmtp()
+    {
+        var (compose, env) = Emit(prod: false);
+
+        Assert.DoesNotContain("mailpit", compose);
+        Assert.DoesNotContain("MAILPIT_PORT", env);
+    }
 }

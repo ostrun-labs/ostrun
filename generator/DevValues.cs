@@ -12,12 +12,20 @@ public sealed record Values(IReadOnlyDictionary<string, string> Items, IReadOnly
 // manifests: no service is special-cased by name, and no secret is hardcoded,
 // so two generated apps never share one.
 //
+// With needsSmtp, dev mode adds MAILPIT_PORT (the host port of Mailpit's web
+// UI) and points the entries marked `smtp` at the Mailpit container.
+//
 // With prod, nothing is generated: a variable without a manifest `default`
 // gets "change-me" in .env.example and lands in MustSet, which the compose
 // file writes as `${NAME:?...}` so Compose refuses to start without it.
 public static class DevValues
 {
     public const string Placeholder = "change-me";
+
+    // Present in Values only when the app runs a Mailpit container.
+    public const string MailpitPortVar = "MAILPIT_PORT";
+    public const string MailpitHost = "mailpit";
+    public const int MailpitSmtpPort = 1025;
 
     // Same order for env entries in every manifest:
     // `generate`, then `default`, then "change-me" if required, else empty.
@@ -34,6 +42,11 @@ public static class DevValues
         }
 
         values["GATEWAY_PORT"] = app.GatewayPort.ToString();
+
+        if (!prod && services.Any(s => s.Manifest.NeedsSmtp))
+        {
+            values[MailpitPortVar] = "8025";
+        }
 
         if (eventBusNeeded)
         {
@@ -80,7 +93,7 @@ public static class DevValues
                 var name = Naming.EnvVar(key, env.Name);
                 if (!prod)
                 {
-                    values[name] = ResolveEntry(env, app);
+                    values[name] = ResolveEntry(env, app, svc.Manifest.NeedsSmtp);
                 }
                 else if (env.Default is not null)
                 {
@@ -102,7 +115,9 @@ public static class DevValues
         || envName.StartsWith("ConnectionStrings__", StringComparison.Ordinal)
         || envName.StartsWith("RabbitMq__", StringComparison.Ordinal);
 
-    public static string ResolveEntry(EnvVar env, AppConfig app) =>
+    public static string ResolveEntry(EnvVar env, AppConfig app, bool needsSmtp = false) =>
+        needsSmtp && env.Smtp is "host" ? MailpitHost :
+        needsSmtp && env.Smtp is "port" ? MailpitSmtpPort.ToString() :
         env.Generate switch
         {
             "password" => RandomPassword(),

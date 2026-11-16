@@ -24,6 +24,11 @@ public static class ComposeGenerator
             AppendRabbitMq(sb, values);
         }
 
+        if (values.Items.ContainsKey(DevValues.MailpitPortVar))
+        {
+            AppendMailpit(sb, values);
+        }
+
         AppendGateway(sb, services, values);
 
         // Compose rejects a bare "volumes:" key, so it is only written when a DB needs one.
@@ -140,6 +145,17 @@ public static class ComposeGenerator
         sb.AppendLine("      interval: 5s");
         sb.AppendLine("      timeout: 5s");
         sb.AppendLine("      retries: 10");
+        sb.AppendLine();
+    }
+
+    // Dev only: DevValues adds MAILPIT_PORT when a selected service needsSmtp.
+    // No credentials and no TLS; only the web UI is published on the host.
+    private static void AppendMailpit(StringBuilder sb, Values values)
+    {
+        sb.AppendLine("  mailpit:");
+        sb.AppendLine("    image: axllent/mailpit");
+        sb.AppendLine("    ports:");
+        sb.AppendLine($"      - \"{Var(values, DevValues.MailpitPortVar)}:8025\"");
         sb.AppendLine();
     }
 
