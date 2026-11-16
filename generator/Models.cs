@@ -152,7 +152,7 @@ public sealed class HealthCheck
 // A selected service, resolved: its ref-derived key plus its parsed manifest.
 // "Key" is what every generated artifact keys off of — {provider}/{service}
 // lower-cased and slashed, e.g. "ostrun/auth" -> compose service "auth-api".
-public sealed record ResolvedService(string Key, ServiceRef Ref, ServiceManifest Manifest)
+public sealed record ResolvedService(string Key, ServiceRef Ref, ServiceManifest Manifest, string Repository = "")
 {
     // The manifest's own `service` field is the naming atom used everywhere
     // in generated artifacts (compose service/hostnames, env prefix, gateway

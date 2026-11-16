@@ -258,7 +258,7 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath, bool 
 
         var manifest = ManifestLoader.Load(Path.Combine(cloneDir, "ostrun.manifest.json"), serviceRef.Ref);
 
-        resolved.Add(new ResolvedService(serviceRef.Ref, serviceRef, manifest));
+        resolved.Add(new ResolvedService(serviceRef.Ref, serviceRef, manifest, repository));
     }
 
     Console.WriteLine("Validating manifests...");
@@ -280,6 +280,17 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath, bool 
 
     Console.WriteLine("Generating .env.example...");
     File.WriteAllText(Path.Combine(outputDir, ".env.example"), EnvExampleGenerator.Generate(app, resolved, eventBusNeeded, values, prod));
+
+    var readmePath = Path.Combine(outputDir, "README.md");
+    if (File.Exists(readmePath))
+    {
+        Console.WriteLine("Warning: README.md already exists in the output folder, leaving it untouched.");
+    }
+    else
+    {
+        Console.WriteLine("Generating README.md...");
+        File.WriteAllText(readmePath, ReadmeGenerator.Generate(app, resolved, values, prod));
+    }
 
     File.WriteAllText(Path.Combine(outputDir, ".gitignore"), ".env\nservices/\n");
 
