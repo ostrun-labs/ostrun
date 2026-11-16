@@ -50,7 +50,7 @@ The rest of this document is meant to help you navigate the repo and make change
 
 ## Event and manifest rules
 
-These are enforced by CI and reviewed strictly. Don't loosen them without maintainer sign-off:
+These are enforced by CI through `ostrun validate` (the `validate-contracts` and `validate-catalog` jobs). Service repos call the reusable `validate-service.yml` workflow to run the same check on their own manifest. They are also reviewed strictly. Don't loosen them without maintainer sign-off:
 
 1. Event names are exactly 3 segments: `{Provider}.{Service}.{Entity}{PastParticiple}` (e.g. `Ostrun.Auth.UserRegistered`). Past participle, never an imperative (`UserRegistered`, not `CreateUser`).
 2. A breaking change to an existing event creates a new version (`v2`, ...) rather than mutating `v1`'s schema in place.
@@ -67,6 +67,7 @@ These are enforced by CI and reviewed strictly. Don't loosen them without mainta
 ## Verifying
 
 - `dotnet build` for `gateway/` and `generator/` individually; there's no top-level solution orchestrating both.
+- `dotnet run --project generator -- validate --contracts contracts` and `... validate --catalog catalog.json --contracts contracts` run the same checks as the `validate-contracts` and `validate-catalog` jobs (the second clones every catalog entry).
 - `dotnet test generator.Tests` runs the generator unit tests (CI runs it in `build-generator`).
 - To exercise the generator end-to-end, run it against a real `app.json` selecting one or two catalog services and confirm `docker-compose.yml`, `gateway/routes.generated.json`, and `.env.example` come out correct. This repo has no automated integration test for that path yet, so a manual run is the proof.
 - CI (`.github/workflows/ci.yml`) validates `/contracts` and every `catalog.json` entry. Don't bypass it; if a change needs CI relaxed, say so explicitly rather than routing around it.
