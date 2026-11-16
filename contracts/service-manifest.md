@@ -17,7 +17,7 @@ In a generated app, the generator clones each service into `services/{provider}/
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `provider` | string | yes | Declarative identifier for the contributor/maintainer, PascalCase. Must match the `Provider` segment of published events. |
-| `service` | string | yes | Short service name, PascalCase if compound (`Auth`, `Messaging`, `OrderFulfillment`). |
+| `service` | string | yes | Short service name, lowercase, matching the second half of the catalog ref (`auth`, `messaging`). A compound name uses hyphens (`order-fulfillment`), only `a-z`, `0-9` and `-`, the same characters the catalog CI allows in a ref. Event names stay PascalCase: the `Service` segment is the `service` value with hyphens dropped, compared case-insensitively (`order-fulfillment` ↔ `Ostrun.OrderFulfillment.OrderShipped`), the same way `provider` is compared. |
 | `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). |
 | `displayName` | string | yes | Human-readable name of the service. |
 | `description` | string | yes | Short description shown in the catalog. |
@@ -36,13 +36,18 @@ In a generated app, the generator clones each service into `services/{provider}/
 
 ## Example: Auth service
 
+Abridged from the real manifest in [`ostrun-auth-service`](https://github.com/ostrun-labs/ostrun-auth-service): the `env` list is a subset, and the optional `generate` field (see "Generated env values") isn't shown.
+
 ```json
 {
   "provider": "Ostrun",
   "service": "auth",
-  "version": "1.0.0",
-  "displayName": "Auth",
-  "description": "Accounts, sessions, and JWT out of the box.",
+  "version": "0.1.0",
+  "displayName": "Ostrun Auth",
+  "description": "Ostrun reference authentication service: email/password and Google sign-in, cookie sessions, RS256 JWTs with a JWKS endpoint.",
+  "repository": "https://github.com/ostrun-labs/ostrun-auth-service",
+  "registry": null,
+  "needsDb": true,
   "basePath": "/auth",
   "events": {
     "published": [
@@ -51,86 +56,111 @@ In a generated app, the generator clones each service into `services/{provider}/
     ],
     "consumed": []
   },
+  "dependencies": [],
   "env": [
     {
-      "name": "Jwt__SigningKey",
-      "description": "RSA private key (PEM, base64-encoded) used to sign JWTs.",
+      "name": "ASPNETCORE_URLS",
       "required": true,
-      "generate": "rsa-private-key"
+      "description": "Kestrel listen URL(s), e.g. http://+:8080"
+    },
+    {
+      "name": "ConnectionStrings__Auth",
+      "required": true,
+      "description": "PostgreSQL connection string (Npgsql)"
+    },
+    {
+      "name": "Jwt__SigningKey",
+      "required": true,
+      "description": "RSA private key (2048+ bits) as base64-encoded PEM, generate one per instance. Its public half is served at /auth/.well-known/jwks.json"
     },
     {
       "name": "Jwt__Issuer",
-      "description": "Issuer claim of issued tokens.",
       "required": true,
-      "generate": "app-name"
+      "description": "JWT issuer (iss)"
     },
     {
       "name": "Jwt__Audience",
-      "description": "Audience claim of issued tokens.",
       "required": true,
-      "generate": "app-name"
+      "description": "JWT audience (aud)"
     },
     {
       "name": "Jwt__ExpirationMinutes",
-      "description": "Validity duration of issued tokens, in minutes.",
       "required": false,
-      "default": "60"
+      "default": "60",
+      "description": "Token validity in minutes"
     }
   ],
   "ports": [
-    { "containerPort": 8080, "protocol": "http", "description": "HTTP API" }
+    {
+      "containerPort": 8080,
+      "protocol": "http",
+      "description": "HTTP API"
+    }
   ],
-  "needsDb": true,
-  "dependencies": [],
   "healthCheck": {
     "path": "/health",
     "method": "GET"
-  },
-  "repository": "https://github.com/ostrun-labs/ostrun-auth-service",
-  "registry": null
+  }
 }
 ```
 
 ## Example: service with a dependency (Messaging)
 
+Abridged from the real manifest in [`ostrun-messaging-service`](https://github.com/ostrun-labs/ostrun-messaging-service): the `env` list is a subset. The manifest declares no `basePath`, so the service serves its routes at the root. It doesn't use `needsSmtp` or `smtp` yet (see "SMTP").
+
 ```json
 {
   "provider": "Ostrun",
   "service": "messaging",
-  "version": "1.0.0",
-  "displayName": "Messaging",
-  "description": "Sends emails triggered by other services' events.",
+  "version": "0.1.0",
+  "displayName": "Ostrun Messaging",
+  "description": "Ostrun reference messaging service: sends emails triggered by other services' events (e.g. user registration).",
+  "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
+  "registry": null,
+  "needsDb": true,
   "events": {
-    "published": ["Ostrun.Messaging.EmailSent"],
-    "consumed": ["Ostrun.Auth.UserRegistered"]
+    "published": [
+      "Ostrun.Messaging.EmailSent"
+    ],
+    "consumed": [
+      "Ostrun.Auth.UserRegistered"
+    ]
   },
+  "dependencies": ["ostrun/auth"],
   "env": [
     {
-      "name": "Smtp__Host",
-      "description": "SMTP server host used for sending.",
+      "name": "ASPNETCORE_URLS",
       "required": true,
-      "smtp": "host"
+      "description": "Kestrel listen URL(s), e.g. http://+:8080"
+    },
+    {
+      "name": "ConnectionStrings__Messaging",
+      "required": true,
+      "description": "PostgreSQL connection string (Npgsql)"
+    },
+    {
+      "name": "Smtp__Host",
+      "required": true,
+      "description": "SMTP server host used for sending"
     },
     {
       "name": "Smtp__Port",
-      "description": "SMTP server port.",
       "required": false,
       "default": "587",
-      "smtp": "port"
+      "description": "SMTP port"
     }
   ],
   "ports": [
-    { "containerPort": 8081, "protocol": "http", "description": "HTTP API" }
+    {
+      "containerPort": 8080,
+      "protocol": "http",
+      "description": "HTTP API"
+    }
   ],
-  "needsDb": false,
-  "needsSmtp": true,
-  "dependencies": ["ostrun/auth"],
   "healthCheck": {
     "path": "/health",
     "method": "GET"
-  },
-  "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
-  "registry": null
+  }
 }
 ```
 
@@ -172,5 +202,7 @@ Fields `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb`, a
 `events.consumed` was simplified to an array of strings (2026-08-24): delivery now goes through RabbitMQ/MassTransit instead of one HTTP endpoint per consumer, so `path`/`method` no longer make sense in the manifest.
 
 `generate` on `env[]` entries and the top-level `needsSmtp` (with `smtp` on `env[]` entries) were added (2026-10). Both are optional: manifests without them keep working, with `change-me` defaults and SMTP configured by hand.
+
+The manifest spec was aligned with the real manifests (2026-10): `service` is lowercase, and the Auth and Messaging examples now match the manifests on each service's `main`.
 
 There is no formal JSON schema for the manifest yet. For now the generator checks the fields it depends on when it runs (see [`generator/README.md`](../generator/README.md)).
