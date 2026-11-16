@@ -3,27 +3,50 @@ using System.Text;
 
 namespace OstrunGenerator;
 
+// Resolved variable values plus the names that must come from .env (prod).
+public sealed record Values(IReadOnlyDictionary<string, string> Items, IReadOnlySet<string> MustSet);
+
 // Dev values for every variable the generated app reads from .env, computed
 // once per generation so docker-compose.yml (as `${NAME:-value}` defaults) and
 // .env.example show exactly the same thing. Everything comes from the
 // manifests: no service is special-cased by name, and no secret is hardcoded,
 // so two generated apps never share one.
+//
+// With prod, nothing is generated: a variable without a manifest `default`
+// gets "change-me" in .env.example and lands in MustSet, which the compose
+// file writes as `${NAME:?...}` so Compose refuses to start without it.
 public static class DevValues
 {
     public const string Placeholder = "change-me";
 
     // Same order for env entries in every manifest:
     // `generate`, then `default`, then "change-me" if required, else empty.
-    public static IReadOnlyDictionary<string, string> Resolve(AppConfig app, IReadOnlyList<ResolvedService> services, bool eventBusNeeded)
+    public static Values Resolve(
+        AppConfig app, IReadOnlyList<ResolvedService> services, bool eventBusNeeded, bool prod = false)
     {
         var values = new Dictionary<string, string>();
+        var mustSet = new HashSet<string>();
+
+        void Unset(string name)
+        {
+            values[name] = Placeholder;
+            mustSet.Add(name);
+        }
 
         values["GATEWAY_PORT"] = app.GatewayPort.ToString();
 
         if (eventBusNeeded)
         {
-            values["RABBITMQ_USER"] = "ostrun";
-            values["RABBITMQ_PASSWORD"] = RandomPassword();
+            if (prod)
+            {
+                Unset("RABBITMQ_USER");
+                Unset("RABBITMQ_PASSWORD");
+            }
+            else
+            {
+                values["RABBITMQ_USER"] = "ostrun";
+                values["RABBITMQ_PASSWORD"] = RandomPassword();
+            }
         }
 
         foreach (var svc in services)
@@ -33,9 +56,18 @@ public static class DevValues
 
             if (svc.Manifest.NeedsDb)
             {
-                values[$"{prefix}POSTGRES_USER"] = $"ostrun_{key}";
-                values[$"{prefix}POSTGRES_PASSWORD"] = RandomPassword();
-                values[$"{prefix}POSTGRES_DB"] = $"ostrun_{key}";
+                if (prod)
+                {
+                    Unset($"{prefix}POSTGRES_USER");
+                    Unset($"{prefix}POSTGRES_PASSWORD");
+                    Unset($"{prefix}POSTGRES_DB");
+                }
+                else
+                {
+                    values[$"{prefix}POSTGRES_USER"] = $"ostrun_{key}";
+                    values[$"{prefix}POSTGRES_PASSWORD"] = RandomPassword();
+                    values[$"{prefix}POSTGRES_DB"] = $"ostrun_{key}";
+                }
             }
 
             foreach (var env in svc.Manifest.Env)
@@ -45,11 +77,23 @@ public static class DevValues
                     continue;
                 }
 
-                values[Naming.EnvVar(key, env.Name)] = ResolveEntry(env, app);
+                var name = Naming.EnvVar(key, env.Name);
+                if (!prod)
+                {
+                    values[name] = ResolveEntry(env, app);
+                }
+                else if (env.Default is not null)
+                {
+                    values[name] = env.Default;
+                }
+                else
+                {
+                    Unset(name);
+                }
             }
         }
 
-        return values;
+        return new Values(values, mustSet);
     }
 
     // Topology the generator inlines in docker-compose.yml, never a variable.

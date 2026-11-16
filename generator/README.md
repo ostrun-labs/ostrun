@@ -26,7 +26,8 @@ cat > app.json <<'EOF'
 }
 EOF
 
-dotnet run --project generator -- app.json ./my-app
+dotnet run --project generator -- app.json ./my-app          # dev mode (default)
+dotnet run --project generator -- app.json ./my-app --prod   # before deploying
 # or, once installed as a tool (see below):
 ostrun app.json ./my-app
 
@@ -94,6 +95,8 @@ To pick up a new local build, run `dotnet tool uninstall -g Ostrun.Cli` first, o
 7. Generates `.env.example`: the union of each manifest's `env[]`, prefixed per service, excluding anything derivable (connection strings, `ASPNETCORE_URLS`, RabbitMQ config).
 
 Both files carry the same dev values, computed once per generation (`DevValues.cs`), so `docker compose up` works with no `.env`. Every variable in `docker-compose.yml` is written as `${NAME:-value}`, and a value in `.env` overrides it. The value of an `env` entry is, in order: its `generate` kind (`password`, `rsa-private-key`, `app-name`), its `default`, `change-me` if required, otherwise empty. Postgres and RabbitMQ passwords are random. Nothing is hardcoded, so two generated apps never share a secret.
+
+With `--prod`, nothing is generated and no secret ends up in a file. Every variable is written `${NAME:?NAME must be set in .env}`, so `docker compose up` stops before starting anything and names the first missing variable, except entries with a manifest `default` (and `GATEWAY_PORT`, which comes from `app.json`), which keep `${NAME:-default}`. `.env.example` shows `change-me` for every value without a manifest default: copy it to `.env` and fill it in. Postgres and RabbitMQ credentials are part of that list.
 
 ## Known limits (MVP)
 

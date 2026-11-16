@@ -2,7 +2,7 @@ using System.Text.Json;
 using OstrunGenerator;
 
 const string usage = """
-    Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]
+    Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>] [--prod]
            ostrun validate <service-dir> [--contracts <contracts-dir>]
            ostrun validate --contracts <contracts-dir>
            ostrun validate --catalog <catalog.json> --contracts <contracts-dir>
@@ -11,6 +11,7 @@ const string usage = """
 var positional = new List<string>();
 string? catalogPath = null;
 string? contractsDir = null;
+var prod = false;
 for (var i = 0; i < args.Length; i++)
 {
     switch (args[i])
@@ -20,6 +21,9 @@ for (var i = 0; i < args.Length; i++)
             return 0;
         case "--catalog" when i + 1 < args.Length:
             catalogPath = args[++i];
+            break;
+        case "--prod":
+            prod = true;
             break;
         case "--contracts" when i + 1 < args.Length:
             contractsDir = args[++i];
@@ -56,7 +60,7 @@ var outputDir = positional[1];
 
 try
 {
-    Run(appJsonPath, outputDir, catalogPath);
+    Run(appJsonPath, outputDir, catalogPath, prod);
     return 0;
 }
 catch (GenerationException ex)
@@ -227,7 +231,7 @@ static void ValidateCatalogEntry(
     }
 }
 
-static void Run(string appJsonPath, string outputDir, string? catalogPath)
+static void Run(string appJsonPath, string outputDir, string? catalogPath, bool prod)
 {
     // The gateway skeleton and catalog.json are copied next to the binary at build time (see OstrunGenerator.csproj).
     var bundleDir = AppContext.BaseDirectory;
@@ -266,7 +270,7 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath)
     Console.WriteLine($"Copying gateway skeleton from {gatewaySkeletonDir}...");
     CopyGatewaySkeleton(gatewaySkeletonDir, Path.Combine(outputDir, "gateway"));
 
-    var values = DevValues.Resolve(app, resolved, eventBusNeeded);
+    var values = DevValues.Resolve(app, resolved, eventBusNeeded, prod);
 
     Console.WriteLine("Generating docker-compose.yml...");
     File.WriteAllText(Path.Combine(outputDir, "docker-compose.yml"), ComposeGenerator.Generate(app, resolved, eventBusNeeded, values));
@@ -275,12 +279,16 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath)
     File.WriteAllText(Path.Combine(outputDir, "gateway", "routes.generated.json"), RoutesGenerator.Generate(resolved));
 
     Console.WriteLine("Generating .env.example...");
-    File.WriteAllText(Path.Combine(outputDir, ".env.example"), EnvExampleGenerator.Generate(app, resolved, eventBusNeeded, values));
+    File.WriteAllText(Path.Combine(outputDir, ".env.example"), EnvExampleGenerator.Generate(app, resolved, eventBusNeeded, values, prod));
 
     File.WriteAllText(Path.Combine(outputDir, ".gitignore"), ".env\nservices/\n");
 
     Console.WriteLine();
     Console.WriteLine($"Done. Next steps in {outputDir}:");
+    if (prod)
+    {
+        Console.WriteLine("  cp .env.example .env   # then replace every change-me");
+    }
     Console.WriteLine("  docker compose up --build -d");
 }
 
