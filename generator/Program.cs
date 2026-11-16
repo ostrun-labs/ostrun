@@ -5,10 +5,12 @@ using OstrunGenerator;
 const string usage = """
     Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]
            ostrun validate <service-dir>
+           ostrun validate --contracts <contracts-dir>
     """;
 
 var positional = new List<string>();
 string? catalogPath = null;
+string? contractsDir = null;
 for (var i = 0; i < args.Length; i++)
 {
     switch (args[i])
@@ -19,10 +21,18 @@ for (var i = 0; i < args.Length; i++)
         case "--catalog" when i + 1 < args.Length:
             catalogPath = args[++i];
             break;
+        case "--contracts" when i + 1 < args.Length:
+            contractsDir = args[++i];
+            break;
         default:
             positional.Add(args[i]);
             break;
     }
+}
+
+if (contractsDir is not null && positional is ["validate"])
+{
+    return ValidateContracts(contractsDir);
 }
 
 if (positional.Count == 2 && positional[0] == "validate")
@@ -48,6 +58,38 @@ catch (GenerationException ex)
 {
     Console.Error.WriteLine(ex.Message);
     return 1;
+}
+
+static int ValidateContracts(string contractsDir)
+{
+    try
+    {
+        var result = ContractRules.CheckDirectory(contractsDir);
+        var inActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true";
+
+        // Annotations show on the PR in GitHub Actions; plain lines elsewhere.
+        foreach (var w in result.Warnings)
+        {
+            Console.WriteLine(inActions ? $"::warning file={w.File}::{w.Message}" : $"warning: {w.File}: {w.Message}");
+        }
+        foreach (var e in result.Errors)
+        {
+            Console.Error.WriteLine(inActions ? $"::error file={e.File}::{e.Message}" : $"error: {e.File}: {e.Message}");
+        }
+
+        if (result.Errors.Count > 0)
+        {
+            return 1;
+        }
+
+        Console.WriteLine("OK");
+        return 0;
+    }
+    catch (GenerationException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
 }
 
 static int ValidateService(string serviceDir)

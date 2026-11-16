@@ -1,6 +1,6 @@
 # Event naming convention, CI validation specification
 
-This document is the **reference specification** for validating Ostrun events, with its test cases. CI only implements part of it today: the contract file checks in §2.6 run on every PR (`validate-contracts` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). The maintainer checks the other rules by hand during review until CI covers them. See §5.
+This document is the **reference specification** for validating Ostrun events, with its test cases. CI only implements part of it today: the contract-only checks (§2.1, §2.4, §2.5, §2.6) run on every PR through `ostrun validate --contracts contracts` (`validate-contracts` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). The maintainer checks the other rules by hand during review until CI covers them. See §5.
 
 ## 1. Event name format
 
@@ -106,12 +106,12 @@ Specification validated on 2026-08-17.
 
 What CI enforces today (`validate-contracts` job):
 
+- §2.1 structure regex
+- §2.4 past participle warning (a `::warning` annotation on the PR, exit code stays 0)
+- §2.5 command blocklist
 - §2.6: file name matches the entity, `title` provider and service match the directory, file version matches `version`.
 
 Checked by hand in review until CI covers them:
 
-- §2.1 structure regex
 - §2.2 provider consistency with the manifest
 - §2.3 provider collision
-- §2.4 past participle warning
-- §2.5 command blocklist
