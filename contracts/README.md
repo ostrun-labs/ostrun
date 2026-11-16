@@ -1,6 +1,6 @@
 # Event naming convention, CI validation specification
 
-This document is the **reference specification** for validating Ostrun events, with its test cases. CI only implements part of it today: the contract-only checks (§2.1, §2.4, §2.5, §2.6) run on every PR through `ostrun validate --contracts contracts` (`validate-contracts` in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)). The maintainer checks the other rules by hand during review until CI covers them. See §5.
+This document is the **reference specification** for validating Ostrun events, with its test cases. CI enforces every rule in §2.1 to §2.6 (§2.4 as a warning annotation). See §5 for which job runs what.
 
 ## 1. Event name format
 
@@ -64,6 +64,8 @@ E.g. `Auth.CreateUser`: **blocked** (`Create` at the end of the segment). `Auth.
 
 ## 3. Validation algorithm (pseudocode)
 
+The implementation is `generator/ContractRules.cs`, `ManifestEvents.cs` and `CatalogRules.cs`, with tests in `generator.Tests/`.
+
 ```
 for each file changed in /contracts/**/*.json (PR):
     read provider, service from the file path
@@ -83,7 +85,7 @@ for each file changed in /contracts/**/*.json (PR):
 
 ## 4. Validation test cases
 
-These cases will become the CI script's test suite once it covers the full spec.
+The name cases are covered by the tests in `generator.Tests/ContractRulesTests.cs` and `ManifestEventsTests.cs`, the collision case by `CatalogRulesTests.cs`. Run them with `dotnet test generator.Tests`.
 
 | Event name | Expected result | Reason |
 |---|---|---|
@@ -102,18 +104,18 @@ These cases will become the CI script's test suite once it covers the full spec.
 
 ## 5. Status
 
-Specification validated on 2026-08-17.
+Specification validated on 2026-08-17. CI enforces all of it through the `ostrun validate` command of the generator, in three places.
 
-The `validate-catalog` job also enforces §2.3: providers equal case-insensitively but not exactly across all catalogued manifests fail, with a note that the maintainer decides.
+| Rule | Checked by | Where |
+|---|---|---|
+| §2.1 structure, §2.5 command blocklist (errors) | `ostrun validate --contracts contracts`, on each contract's `title` | `validate-contracts` job in [`ci.yml`](../.github/workflows/ci.yml) |
+| §2.4 past participle (warning) | same command | same job; a `::warning` annotation, exit code stays 0 |
+| §2.6 contract file | same command | same job: the file name matches the entity, the `title` provider and service match the directory, the file version matches `version` |
+| §2.1, §2.4, §2.5 on a manifest's events | `ostrun validate <service-dir> --contracts <dir>`, on each name in `events.published`/`events.consumed` | service repos, through [`validate-service.yml`](../.github/workflows/validate-service.yml); ostrun, through `validate-catalog` |
+| A contract file exists for each event | same command | same places |
+| §2.2 provider consistency | same command, on `events.published` only (the `Service` segment is compared to the manifest's `service` case-insensitively) | same places |
+| §2.3 provider collision | `ostrun validate --catalog catalog.json --contracts contracts` | `validate-catalog` job |
 
-What CI enforces today (`validate-contracts` job) on the contract files:
+`validate-catalog` clones every `catalog.json` entry at its `rev` and also checks the manifest's `provider` and `service` against the entry's `ref`. When two providers collide, the error says the maintainer decides; there is no automatic resolution.
 
-- §2.1 structure regex
-- §2.4 past participle warning (a `::warning` annotation on the PR, exit code stays 0)
-- §2.5 command blocklist
-- §2.6: file name matches the entity, `title` provider and service match the directory, file version matches `version`.
-
-`ostrun validate <service-dir> --contracts <dir>` checks a manifest against the contracts: §2.1, §2.4 and §2.5 on each name in `events.published`/`events.consumed`, a contract file for each, and §2.2 provider consistency (plus the service segment) for `events.published`. The `validate-catalog` job runs it on every `catalog.json` entry (`ostrun validate --catalog catalog.json --contracts contracts`), after cloning each service at its `rev`, and also checks the manifest's `provider`/`service` against the entry's `ref`.
-
-Checked by hand in review until CI covers them:
-
+Nothing is left to hand checking in review for these rules. Review still covers what a script can't judge, such as whether an event is a real business fact.

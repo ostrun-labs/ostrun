@@ -52,6 +52,26 @@ MassTransit stays on 8.4.1 on purpose. The 8.5 EF Core integration requires EF C
 
 Libraries specific to one service (MailKit for the messaging service, for example) are up to that service.
 
+### Validate your service
+
+`ostrun validate` checks your `ostrun.manifest.json` and, with `--contracts`, the events it declares. From a clone of this repo:
+
+```bash
+dotnet run --project generator -- validate ../my-service --contracts contracts
+```
+
+It lists every error and exits 1, or prints `OK`. Warnings (a past-participle doubt) don't fail it. Details: [`generator/README.md`](./generator/README.md).
+
+Then add a job to your service's CI that calls the reusable workflow, so every PR in your repo is checked against ostrun's current rules and contracts:
+
+```yaml
+jobs:
+  validate:
+    uses: ostrun-labs/ostrun/.github/workflows/validate-service.yml@main
+```
+
+When your service is catalogued, ostrun's `validate-catalog` job runs the same check on it for every PR here.
+
 ## Adding or changing an event
 
 This is the most sensitive part of the project. Please follow these rules to the letter:
@@ -60,7 +80,7 @@ This is the most sensitive part of the project. Please follow these rules to the
 2. The last segment ends in a **past participle** describing a completed fact (`UserRegistered`, never `CreateUser`). Validation stays **loose**: no closed list of verbs, since the service catalog is meant to grow and a strict list would require a PR for every new business verb.
 3. Any change to an existing event creates a **new version** (`v2`, etc.) rather than breaking the existing one.
 4. The schema (JSON Schema or Protobuf) goes in `/contracts/{provider}/{service}/{Entity}{PastParticiple}.v1.json`, versioned.
-5. Your pull request must pass **contract validation CI**. Today CI checks that the file name, the schema `title`, and the `version` agree with each other and with the directory. The maintainer checks the other naming rules by hand in review until CI covers them: provider consistency with the manifest, past participle, blocklisted verbs.
+5. Your pull request must pass **contract validation CI**, which checks the file name, schema `title` and `version` against each other and the directory, the name structure, the command blocklist, and warns on a name that doesn't look like a past participle. The service's own CI checks the manifest's events against these contracts (see below).
 
 There is no central event governance service. Consistency happens through PR review, not through a single execution point.
 
@@ -69,7 +89,7 @@ There is no central event governance service. Consistency happens through PR rev
 ## Pull request process
 
 1. Fork the repo, create a branch from `main`.
-2. Make sure tests and CI pass (build, tests, contract validation if you touch `/contracts`).
+2. Make sure tests and CI pass (build, tests, contract and catalog validation).
 3. Clearly describe in the PR what the service or change does, and any events published or consumed.
 4. A maintainer reviews and merges.
 
