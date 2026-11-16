@@ -67,6 +67,7 @@ These are enforced by CI and reviewed strictly. Don't loosen them without mainta
 ## Verifying
 
 - `dotnet build` for `gateway/` and `generator/` individually; there's no top-level solution orchestrating both.
+- `dotnet test generator.Tests` runs the generator unit tests (CI runs it in `build-generator`).
 - To exercise the generator end-to-end, run it against a real `app.json` selecting one or two catalog services and confirm `docker-compose.yml`, `gateway/routes.generated.json`, and `.env.example` come out correct. This repo has no automated integration test for that path yet, so a manual run is the proof.
 - CI (`.github/workflows/ci.yml`) validates `/contracts` and `catalog.json` structure. Don't bypass it; if a change needs CI relaxed, say so explicitly rather than routing around it.
 - No live dev server or database in this repo to protect. Unlike a running product, there's nothing here that stays up between sessions. The generator is a one-shot CLI; run it freely.

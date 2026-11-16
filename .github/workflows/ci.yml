@@ -39,6 +39,9 @@ jobs:
       - name: Build
         run: dotnet build generator/OstrunGenerator.csproj --no-restore --configuration Release
 
+      - name: Test
+        run: dotnet test generator.Tests --configuration Release
+
   validate-catalog:
     runs-on: ubuntu-latest
     steps:
