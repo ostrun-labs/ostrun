@@ -63,6 +63,14 @@ dotnet run --project generator -- validate --contracts contracts
 
 Walks `<dir>/**/*.v*.json` (skipping `_verbs/`) and checks each file against the rules in [`../contracts/README.md`](../contracts/README.md) that need only the contract: valid JSON, `title` matches the directory, file name and version (§2.6), the 3-segment PascalCase structure (§2.1) and the command-verb blocklist (§2.5) as errors (exit 1), and the past-participle heuristic (§2.4) as a warning (exit stays 0). With `GITHUB_ACTIONS=true`, findings print as `::warning`/`::error` annotations. This is what the `validate-contracts` CI job runs.
 
+## Validate the catalog
+
+```bash
+dotnet run --project generator -- validate --catalog catalog.json --contracts contracts
+```
+
+Checks every entry of a `catalog.json` against an ostrun checkout's `contracts/` folder. First the structure, with no network: valid JSON, `ref`/`repository`/`rev` present, `ref` matching `^[a-z0-9-]+/[a-z0-9-]+$`, no duplicate `ref`, `repository` an https URL. If the structure is fine, each entry is cloned at its `rev` into a temp folder (removed afterwards) and gets the full single-service validation with `--contracts`, plus the manifest's `provider` and `service` against the entry's `ref`. Last, the provider collision rule (§2.3): two providers equal case-insensitively but not exactly (`Acme` and `ACME`) is an error, the same exact provider on several services is fine. All errors are listed and the exit code is 1; with `GITHUB_ACTIONS=true` they print as `::error` annotations. This is what the `validate-catalog` CI job runs, on every PR.
+
 ## Install as a local tool
 
 ```bash
@@ -92,4 +100,4 @@ Both files carry the same dev values, computed once per generation (`DevValues.c
 - One HTTP port per service (a `ports[]` with more than one entry fails validation).
 - No "ready-to-use" mode (`registry`): the generator always clones from `repository`.
 - No transitive dependency resolution: if `app.json` selects Messaging without Auth, validation fails instead of adding Auth automatically.
-- `catalog.json` is hand-maintained for now. No CI checks that it stays in sync with the real manifests of the services it lists, only its own structural validity (see `.github/workflows/ci.yml`).
+- `catalog.json` is hand-maintained for now. The `validate-catalog` CI job clones each entry and validates its manifest, but nothing updates the catalog when a service changes (see `.github/workflows/ci.yml`).
