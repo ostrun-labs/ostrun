@@ -2,7 +2,10 @@ using System.Diagnostics;
 using System.Text.Json;
 using OstrunGenerator;
 
-const string usage = "Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]";
+const string usage = """
+    Usage: ostrun <app.json> <output-dir> [--catalog <catalog.json>]
+           ostrun validate <service-dir>
+    """;
 
 var positional = new List<string>();
 string? catalogPath = null;
@@ -20,6 +23,11 @@ for (var i = 0; i < args.Length; i++)
             positional.Add(args[i]);
             break;
     }
+}
+
+if (positional.Count == 2 && positional[0] == "validate")
+{
+    return ValidateService(positional[1]);
 }
 
 if (positional.Count != 2)
@@ -42,12 +50,37 @@ catch (GenerationException ex)
     return 1;
 }
 
+static int ValidateService(string serviceDir)
+{
+    try
+    {
+        var manifest = ManifestLoader.Load(Path.Combine(serviceDir, "ostrun.manifest.json"), serviceDir);
+        var errors = ManifestRules.Check(manifest, serviceDir);
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Console.Error.WriteLine($"  - {error}");
+            }
+            return 1;
+        }
+
+        Console.WriteLine("OK");
+        return 0;
+    }
+    catch (GenerationException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
+
 static void Run(string appJsonPath, string outputDir, string? catalogPath)
 {
     // The gateway skeleton and catalog.json are copied next to the binary at build time (see OstrunGenerator.csproj).
     var bundleDir = AppContext.BaseDirectory;
 
-    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+    var jsonOptions = ManifestLoader.JsonOptions;
 
     var app = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(appJsonPath), jsonOptions)
         ?? throw new GenerationException($"{appJsonPath}: could not parse app config.");
@@ -67,14 +100,7 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath)
         Console.WriteLine($"Cloning {serviceRef.Ref} from {repository} ({rev})...");
         CloneService(repository, rev, cloneDir);
 
-        var manifestPath = Path.Combine(cloneDir, "ostrun.manifest.json");
-        if (!File.Exists(manifestPath))
-        {
-            throw new GenerationException($"{serviceRef.Ref}: no ostrun.manifest.json found at {manifestPath} after clone.");
-        }
-
-        var manifest = JsonSerializer.Deserialize<ServiceManifest>(File.ReadAllText(manifestPath), jsonOptions)
-            ?? throw new GenerationException($"{serviceRef.Ref}: could not parse manifest.");
+        var manifest = ManifestLoader.Load(Path.Combine(cloneDir, "ostrun.manifest.json"), serviceRef.Ref);
 
         resolved.Add(new ResolvedService(serviceRef.Ref, serviceRef, manifest));
     }

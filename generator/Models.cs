@@ -62,6 +62,15 @@ public sealed class ServiceManifest
     [JsonPropertyName("service")]
     public string Service { get; init; } = "";
 
+    [JsonPropertyName("version")]
+    public string Version { get; init; } = "";
+
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; init; } = "";
+
+    [JsonPropertyName("description")]
+    public string Description { get; init; } = "";
+
     [JsonPropertyName("basePath")]
     public string? BasePath { get; init; }
 

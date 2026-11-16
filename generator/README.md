@@ -38,6 +38,15 @@ On Windows, a full file path is capped at 260 characters by default. The Auth se
 
 A bare `ref` is enough for a service listed in [`../catalog.json`](../catalog.json). The generator resolves `repository`/`rev` from there. For a personal service not yet catalogued, giving `repository` (and optionally `rev`) directly in the `app.json` entry skips the catalog lookup.
 
+## Validate a service manifest
+
+```bash
+dotnet run --project generator -- validate ../ostrun-auth-service
+# or: ostrun validate ../ostrun-auth-service
+```
+
+Checks the `ostrun.manifest.json` at the root of a service directory, with no `app.json` and no clone. It lists every error and exits 1, or prints `OK` and exits 0. The rules are the per-manifest ones the generator also applies: required fields present, `provider` PascalCase, `service` lowercase, exactly one `http` port, `healthCheck.method == GET`, no two `env` entries mapping to the same `.env` variable. Rules that need the whole `app.json` (duplicate refs, manifest vs ref, dependencies) only run when generating.
+
 ## Install as a local tool
 
 ```bash
@@ -54,7 +63,7 @@ To pick up a new local build, run `dotnet tool uninstall -g Ostrun.Cli` first, o
 
 1. Resolves each `ref` in `app.json`. It uses `repository`/`rev` when the entry gives them, otherwise it looks the `ref` up in the catalog (the bundled `catalog.json`, or the file passed with `--catalog`).
 2. Clones each service (`git clone --depth 1`) into `services/{ref}/`.
-3. Reads and validates each `ostrun.manifest.json` (single HTTP port, `healthCheck.method == GET`, dependencies resolved within the selection). Fails loudly rather than generating a broken app.
+3. Reads and validates each `ostrun.manifest.json` (per-manifest rules as in `validate`, plus no duplicate refs, manifest matching its ref, dependencies resolved within the selection). Fails loudly rather than generating a broken app.
 4. Copies the gateway skeleton (`gateway/`, bundled with the tool) as-is.
 5. Generates `docker-compose.yml`: one `{key}-api` service per selected service, a `{key}-db` if `needsDb`, a `rabbitmq` if at least one service publishes or consumes events. No host port published besides the gateway's.
 6. Generates `gateway/routes.generated.json`: a catch-all route plus a dedicated health route per service (the health check always lives at an absolute path on the container, independent of `basePath`).
