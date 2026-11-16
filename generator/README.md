@@ -47,6 +47,14 @@ dotnet run --project generator -- validate ../ostrun-auth-service
 
 Checks the `ostrun.manifest.json` at the root of a service directory, with no `app.json` and no clone. It lists every error and exits 1, or prints `OK` and exits 0. The rules are the per-manifest ones the generator also applies: required fields present, `provider` PascalCase, `service` lowercase, exactly one `http` port, `healthCheck.method == GET`, no two `env` entries mapping to the same `.env` variable. Rules that need the whole `app.json` (duplicate refs, manifest vs ref, dependencies) only run when generating.
 
+## Validate event contracts
+
+```bash
+dotnet run --project generator -- validate --contracts contracts
+```
+
+Walks `<dir>/**/*.v*.json` (skipping `_verbs/`) and checks each file against the rules in [`../contracts/README.md`](../contracts/README.md) that need only the contract: valid JSON, `title` matches the directory, file name and version (§2.6), the 3-segment PascalCase structure (§2.1) and the command-verb blocklist (§2.5) as errors (exit 1), and the past-participle heuristic (§2.4) as a warning (exit stays 0). With `GITHUB_ACTIONS=true`, findings print as `::warning`/`::error` annotations. This is what the `validate-contracts` CI job runs.
+
 ## Install as a local tool
 
 ```bash
