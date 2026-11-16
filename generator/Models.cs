@@ -77,6 +77,11 @@ public sealed class ServiceManifest
     [JsonPropertyName("needsDb")]
     public bool NeedsDb { get; init; }
 
+    // Like needsDb: the service declares a need, the generator provides a
+    // Mailpit container in dev mode.
+    [JsonPropertyName("needsSmtp")]
+    public bool NeedsSmtp { get; init; }
+
     [JsonPropertyName("events")]
     public EventsSection Events { get; init; } = new();
 
@@ -120,6 +125,10 @@ public sealed class EnvVar
     // dev value instead of "change-me". See DevValues.
     [JsonPropertyName("generate")]
     public string? Generate { get; init; }
+
+    // "host" | "port": with needsSmtp, dev mode points this entry at Mailpit.
+    [JsonPropertyName("smtp")]
+    public string? Smtp { get; init; }
 }
 
 public sealed class PortEntry

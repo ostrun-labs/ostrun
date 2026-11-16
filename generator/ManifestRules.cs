@@ -61,6 +61,11 @@ public static partial class ManifestRules
         var envVars = new HashSet<string>();
         foreach (var env in manifest.Env)
         {
+            if (env.Smtp is not (null or "host" or "port"))
+            {
+                errors.Add($"{label}: env entry '{env.Name}' has smtp '{env.Smtp}', expected 'host' or 'port'.");
+            }
+
             var variable = Naming.EnvVar(manifest.Service, env.Name);
             if (!envVars.Add(variable))
             {
