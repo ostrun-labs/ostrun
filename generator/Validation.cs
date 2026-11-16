@@ -1,5 +1,8 @@
 namespace OstrunGenerator;
 
+// Validation of a whole app selection before generation. Runs the per-manifest
+// rules (ManifestRules) on each service, then the selection rules that need
+// the full app.json: duplicate refs, manifest vs ref, dependencies present.
 public static class Validation
 {
     // Fails loudly and stops generation rather than emitting a broken app —
@@ -15,37 +18,22 @@ public static class Validation
         {
             var label = svc.Ref.Ref;
 
+            errors.AddRange(ManifestRules.Check(svc.Manifest, label));
+
             if (!keys.Add(svc.Ref.Ref))
             {
                 errors.Add($"{label}: duplicate service ref selected twice.");
             }
 
-            if (svc.Manifest.Provider.ToLowerInvariant() != svc.Ref.Ref.Split('/')[0])
+            var refParts = svc.Ref.Ref.Split('/');
+            if (svc.Manifest.Provider.ToLowerInvariant() != refParts[0])
             {
                 errors.Add($"{label}: manifest provider '{svc.Manifest.Provider}' does not match app.json ref.");
             }
 
-            if (svc.Manifest.Ports.Count != 1)
+            if (refParts.Length < 2 || svc.Manifest.Service != refParts[1])
             {
-                errors.Add($"{label}: manifest must declare exactly one ports[] entry (got {svc.Manifest.Ports.Count}) — multi-port services are unsupported by this generator.");
-            }
-            else if (svc.Manifest.Ports[0].Protocol != "http")
-            {
-                errors.Add($"{label}: ports[0].protocol must be 'http', got '{svc.Manifest.Ports[0].Protocol}'.");
-            }
-
-            if (svc.Manifest.HealthCheck.Method != "GET")
-            {
-                errors.Add($"{label}: healthCheck.method must be 'GET' (YARP active health checks are GET-only), got '{svc.Manifest.HealthCheck.Method}'.");
-            }
-
-            var envVars = new HashSet<string>();
-            foreach (var env in svc.Manifest.Env)
-            {
-                if (!envVars.Add(Naming.EnvVar(svc.ServiceKey, env.Name)))
-                {
-                    errors.Add($"{label}: env entry '{env.Name}' maps to .env variable '{Naming.EnvVar(svc.ServiceKey, env.Name)}', which another entry already uses.");
-                }
+                errors.Add($"{label}: manifest service '{svc.Manifest.Service}' does not match app.json ref.");
             }
 
             foreach (var dep in svc.Manifest.Dependencies)
