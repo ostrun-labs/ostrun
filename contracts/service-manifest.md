@@ -22,6 +22,7 @@ In a generated app, the generator clones each service into `services/{provider}/
 | `displayName` | string | yes | Human-readable name of the service. |
 | `description` | string | yes | Short description shown in the catalog. |
 | `basePath` | string | optional (default `/`) | Internal prefix under which the service mounts its routes (e.g. `/auth`). Without this field, the gateway assumes the service serves its routes at the root. If that's not the case, it strips the app prefix and breaks routing (`/auth/register` -> `/register` on the service side -> 404). |
+| `exposure` | string | optional (default `public`) | Whether the gateway routes the service from outside. See "Exposure" below. |
 | `events.published` | string[] | yes (can be empty) | Full names of published events (3 segments), referencing files in `/contracts`. |
 | `events.consumed` | string[] | yes (can be empty) | Full names of consumed events (3 segments). Routing to this service happens by subscribing to a RabbitMQ exchange named after the event (no HTTP endpoint to declare), see "Event bus" below. |
 | `env` | object[] | yes (can be empty) | Expected environment variables. Each entry: `name`, `description`, `required` (bool), `default` (optional, a string), `generate` (optional, see "Generated env values"), `smtp` (optional, see "SMTP"). The generator writes `default` into `.env.example` and uses it in `docker-compose.yml` when the variable is empty or missing from `.env`. Declare a `default` on every optional variable that isn't plain text, such as a number or a boolean. Compose passes an empty variable as `""`, and a .NET service fails at startup when it binds `""` to an `int` or `bool`. |
@@ -49,6 +50,7 @@ Abridged from the real manifest in [`ostrun-auth-service`](https://github.com/os
   "registry": null,
   "needsDb": true,
   "basePath": "/auth",
+  "exposure": "public",
   "events": {
     "published": [
       "Ostrun.Auth.UserRegistered",
@@ -106,7 +108,7 @@ Abridged from the real manifest in [`ostrun-auth-service`](https://github.com/os
 
 ## Example: service with a dependency (Messaging)
 
-Abridged from the real manifest in [`ostrun-messaging-service`](https://github.com/ostrun-labs/ostrun-messaging-service): the `env` list is a subset. The manifest declares no `basePath`, so the service serves its routes at the root. It doesn't use `needsSmtp` or `smtp` yet (see "SMTP").
+Abridged from the real manifest in [`ostrun-messaging-service`](https://github.com/ostrun-labs/ostrun-messaging-service): the `env` list is a subset. The manifest declares no `basePath`, so the service serves its routes at the root, and it is `internal`: the gateway has no route to it. It doesn't use `needsSmtp` or `smtp` yet (see "SMTP").
 
 ```json
 {
@@ -118,6 +120,7 @@ Abridged from the real manifest in [`ostrun-messaging-service`](https://github.c
   "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
   "registry": null,
   "needsDb": true,
+  "exposure": "internal",
   "events": {
     "published": [
       "Ostrun.Messaging.EmailSent"
@@ -164,6 +167,19 @@ Abridged from the real manifest in [`ostrun-messaging-service`](https://github.c
 }
 ```
 
+## Exposure
+
+`exposure` says whether the gateway routes the service from outside the app.
+
+| `exposure` | Meaning |
+|---|---|
+| `"public"` | The gateway routes the service, so anyone who can reach the gateway can call it. Use it for services that clients call directly, such as Auth. |
+| `"internal"` | The gateway has no route to the service, not even for its health check. Other services in the app reach it on the Compose network at `http://{service}-api:{containerPort}`, for example `http://messaging-api:8080`. Use it for services that only work on behalf of other services. |
+
+The granularity is the whole service. A service can't expose some routes and keep others internal.
+
+When `exposure` is missing, the service is treated as `public` and the generator prints a warning naming it. Existing manifests and third-party services keep working, and nothing is silently dropped from the gateway. This is a transition: catalogued services will be required to declare `exposure`, enforced by `ostrun validate` in CI.
+
 ## Generated env values
 
 An `env` entry can declare `generate` so the generator fills in a value instead of leaving `change-me`:
@@ -204,5 +220,7 @@ Fields `basePath`, `events.published`/`events.consumed`, `ports[]`, `needsDb`, a
 `generate` on `env[]` entries and the top-level `needsSmtp` (with `smtp` on `env[]` entries) were added (2026-10). Both are optional: manifests without them keep working, with `change-me` defaults and SMTP configured by hand.
 
 The manifest spec was aligned with the real manifests (2026-10): `service` is lowercase, and the Auth and Messaging examples now match the manifests on each service's `main`.
+
+`exposure` was added (2026-11). It is optional and defaults to `public`, so manifests without it keep working.
 
 There is no formal JSON schema for the manifest yet. For now the generator checks the fields it depends on when it runs (see [`generator/README.md`](../generator/README.md)).
