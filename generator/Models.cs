@@ -74,6 +74,11 @@ public sealed class ServiceManifest
     [JsonPropertyName("basePath")]
     public string? BasePath { get; init; }
 
+    // "public" | "internal"; missing = public (the generator warns). An
+    // internal service gets no gateway route.
+    [JsonPropertyName("exposure")]
+    public string? Exposure { get; init; }
+
     [JsonPropertyName("needsDb")]
     public bool NeedsDb { get; init; }
 
@@ -159,4 +164,6 @@ public sealed record ResolvedService(string Key, ServiceRef Ref, ServiceManifest
     // route prefix) — not the full "{provider}/{service}" ref, which is only
     // used to resolve `dependencies` entries.
     public string ServiceKey => Manifest.Service;
+
+    public bool IsInternal => Manifest.Exposure == "internal";
 }

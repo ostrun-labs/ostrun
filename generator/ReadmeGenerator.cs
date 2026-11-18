@@ -3,7 +3,8 @@ using System.Text;
 namespace OstrunGenerator;
 
 // Generates the README.md of the generated app: how to start and stop it, the
-// public prefix and health URL of each selected service, the Mailpit URL when
+// public prefix and health URL of each public service (an internal one gets
+// its in-app address instead), the Mailpit URL when
 // the app has one, and a warning about dev values. Everything comes from
 // app.json and the manifests, so no service is special-cased by name.
 public static class ReadmeGenerator
@@ -32,7 +33,7 @@ public static class ReadmeGenerator
             ? "The first command builds and starts the app, the second stops it. Compose refuses to start until `.env` has a value for every variable."
             : "The first command builds and starts the app, the second stops it. No `.env` is needed: the dev values are the defaults in `docker-compose.yml`.");
         sb.AppendLine();
-        sb.AppendLine($"Everything goes through the gateway at {gateway}.");
+        sb.AppendLine($"Public services go through the gateway at {gateway}.");
         sb.AppendLine();
         sb.AppendLine("## Services");
 
@@ -49,8 +50,17 @@ public static class ReadmeGenerator
                 sb.AppendLine(m.Description);
                 sb.AppendLine();
             }
-            sb.AppendLine($"- Public prefix: {gateway}/{key}/");
-            sb.AppendLine($"- Health: {gateway}/{key}{m.HealthCheck.Path}");
+            if (svc.IsInternal)
+            {
+                var port = m.Ports.Count > 0 ? m.Ports[0].ContainerPort : 8080;
+                sb.AppendLine($"- Internal: not reachable through the gateway. Other services call it at http://{key}-api:{port}");
+                sb.AppendLine($"- Health (from inside the app): http://{key}-api:{port}{m.HealthCheck.Path}");
+            }
+            else
+            {
+                sb.AppendLine($"- Public prefix: {gateway}/{key}/");
+                sb.AppendLine($"- Health: {gateway}/{key}{m.HealthCheck.Path}");
+            }
             if (!string.IsNullOrEmpty(svc.Repository))
             {
                 sb.AppendLine($"- Routes and configuration: see the README of {svc.Repository}.");

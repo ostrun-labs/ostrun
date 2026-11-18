@@ -91,13 +91,19 @@ To pick up a new local build, run `dotnet tool uninstall -g Ostrun.Cli` first, o
 3. Reads and validates each `ostrun.manifest.json` (per-manifest rules as in `validate`, plus no duplicate refs, manifest matching its ref, dependencies resolved within the selection). Fails loudly rather than generating a broken app.
 4. Copies the gateway skeleton (`gateway/`, bundled with the tool) as-is.
 5. Generates `docker-compose.yml`: one `{key}-api` service per selected service, a `{key}-db` if `needsDb`, a `rabbitmq` if at least one service publishes or consumes events, and, in dev mode only, a `mailpit` (`axllent/mailpit`) if at least one service declares `needsSmtp`. No host port published besides the gateway's and Mailpit's web UI (`${MAILPIT_PORT:-8025}`).
-6. Generates `gateway/routes.generated.json`: a catch-all route plus a dedicated health route per service (the health check always lives at an absolute path on the container, independent of `basePath`).
+6. Generates `gateway/routes.generated.json`: a catch-all route plus a dedicated health route per public service (the health check always lives at an absolute path on the container, independent of `basePath`). An `internal` service gets no route, no health route and no cluster, and the gateway's `depends_on` only lists public services.
 7. Generates `.env.example`: the union of each manifest's `env[]`, prefixed per service, excluding anything derivable (connection strings, `ASPNETCORE_URLS`, RabbitMQ config).
-8. Generates `README.md` for the generated app: how to start and stop it, one section per selected service (public prefix, health URL, link to the service's repository), the Mailpit URL when there is one, and a "Before deploying" warning about dev values. An existing `README.md` in the output folder is left untouched, with a warning.
+8. Generates `README.md` for the generated app: how to start and stop it, one section per selected service (public prefix and health URL, or the in-app address for an internal service, plus a link to the service's repository), the Mailpit URL when there is one, and a "Before deploying" warning about dev values. An existing `README.md` in the output folder is left untouched, with a warning.
 
 Both `.env.example` and `docker-compose.yml` carry the same dev values, computed once per generation (`DevValues.cs`), so `docker compose up` works with no `.env`. Every variable in `docker-compose.yml` is written as `${NAME:-value}`, and a value in `.env` overrides it. The value of an `env` entry is, in order: its `generate` kind (`password`, `rsa-private-key`, `app-name`), its `default`, `change-me` if required, otherwise empty. Postgres and RabbitMQ passwords are random. For a service with `needsSmtp: true`, the entries marked `smtp: "host"` / `"port"` get `mailpit` / `1025` (no TLS, no credentials); read the emails at `http://localhost:8025`. Nothing is hardcoded, so two generated apps never share a secret.
 
 With `--prod`, nothing is generated and no secret ends up in a file. Every variable is written `${NAME:?NAME must be set in .env}`, so `docker compose up` stops before starting anything and names the first missing variable, except entries with a manifest `default` (and `GATEWAY_PORT`, which comes from `app.json`), which keep `${NAME:-default}`. `.env.example` shows `change-me` for every value without a manifest default: copy it to `.env` and fill it in. Postgres and RabbitMQ credentials are part of that list. No Mailpit is added: the `smtp` entries are required like any other variable, pointing at a real SMTP server.
+
+## Exposure: public vs internal
+
+A manifest can declare `"exposure": "public" | "internal"` (see [`../contracts/service-manifest.md`](../contracts/service-manifest.md)). A `public` service is routed by the gateway. An `internal` service has no gateway route at all, not even its health route; other services reach it on the Compose network at `http://{key}-api:{port}`. Any other value fails validation.
+
+A missing `exposure` means `public`, so older manifests and third-party services generate as before. The generator prints `{ref}: manifest doesn't declare "exposure", exposed through the gateway by default.` for each one.
 
 ## Known limits (MVP)
 

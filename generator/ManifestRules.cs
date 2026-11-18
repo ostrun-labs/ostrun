@@ -73,8 +73,10 @@ public static partial class ManifestRules
             }
         }
 
-        // `exposure` (public | internal) isn't checked yet: the "Internal vs
-        // public services at the gateway" epic hasn't landed. Add the rule there.
+        if (manifest.Exposure is not (null or "public" or "internal"))
+        {
+            errors.Add($"{label}: exposure '{manifest.Exposure}' must be 'public' or 'internal'.");
+        }
 
         return errors;
     }
