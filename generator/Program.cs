@@ -264,6 +264,11 @@ static void Run(string appJsonPath, string outputDir, string? catalogPath, bool 
     Console.WriteLine("Validating manifests...");
     Validation.Validate(resolved);
 
+    foreach (var svc in resolved.Where(s => s.Manifest.Exposure is null))
+    {
+        Console.WriteLine($"{svc.Ref.Ref}: manifest doesn't declare \"exposure\", exposed through the gateway by default.");
+    }
+
     var eventBusNeeded = resolved.Any(s => s.Manifest.Events.Published.Count > 0 || s.Manifest.Events.Consumed.Count > 0);
 
     var gatewaySkeletonDir = Path.Combine(bundleDir, "gateway");

@@ -171,10 +171,15 @@ public static class ComposeGenerator
         sb.AppendLine($"      - \"{Var(values, "GATEWAY_PORT")}:8080\"");
         sb.AppendLine("    volumes:");
         sb.AppendLine("      - ./gateway/routes.generated.json:/app/routes.generated.json:ro");
-        sb.AppendLine("    depends_on:");
-        foreach (var svc in services)
+        // Internal services have no route, so the gateway doesn't wait for them.
+        var publicServices = services.Where(s => !s.IsInternal).ToList();
+        if (publicServices.Count > 0)
         {
-            sb.AppendLine($"      - {svc.ServiceKey}-api");
+            sb.AppendLine("    depends_on:");
+            foreach (var svc in publicServices)
+            {
+                sb.AppendLine($"      - {svc.ServiceKey}-api");
+            }
         }
         sb.AppendLine();
     }

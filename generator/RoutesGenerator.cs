@@ -10,7 +10,8 @@ public static class RoutesGenerator
         var routes = new JsonObject();
         var clusters = new JsonObject();
 
-        foreach (var svc in services)
+        // An internal service gets nothing here: no route, no health route, no cluster.
+        foreach (var svc in services.Where(s => !s.IsInternal))
         {
             var key = svc.ServiceKey;
             var port = svc.Manifest.Ports[0].ContainerPort;
