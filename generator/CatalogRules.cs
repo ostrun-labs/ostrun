@@ -6,7 +6,8 @@ namespace OstrunGenerator;
 // Rules on catalog.json that need no network: its structure (valid JSON, each
 // entry has ref/repository/rev, ref format, no duplicate ref, https repository)
 // and the provider collision across all manifests (contracts/README.md §2.3).
-// The per-entry clone and manifest checks live in Program.cs
+// The per-entry clone and manifest checks live in Program.cs, run at the rev the
+// generator would use (rev "latest" resolved to the highest vX.Y.Z tag)
 // (`ostrun validate --catalog <catalog.json> --contracts <dir>`).
 public static partial class CatalogRules
 {
