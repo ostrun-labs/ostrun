@@ -87,7 +87,7 @@ To pick up a new local build, run `dotnet tool uninstall -g Ostrun.Cli` first, o
 ## What it does
 
 1. Resolves each `ref` in `app.json`. It uses `repository`/`rev` when the entry gives them, otherwise it looks the `ref` up in the catalog (the bundled `catalog.json`, or the file passed with `--catalog`).
-2. Clones each service (`git clone --depth 1`) into `services/{ref}/`.
+2. Clones each service (`git clone --depth 1`) into `services/{ref}/`. A `rev` of `latest` is first resolved with `git ls-remote --tags` to the highest `vX.Y.Z` tag (other tags, including pre-releases like `v1.0.0-rc.1`, are ignored); with no such tag, generation fails. Any other `rev` is a branch or tag, used as-is.
 3. Reads and validates each `ostrun.manifest.json` (per-manifest rules as in `validate`, plus no duplicate refs, manifest matching its ref, dependencies resolved within the selection). Fails loudly rather than generating a broken app.
 4. Copies the gateway skeleton (`gateway/`, bundled with the tool) as-is.
 5. Generates `docker-compose.yml`: one `{key}-api` service per selected service, a `{key}-db` if `needsDb`, a `rabbitmq` if at least one service publishes or consumes events, and, in dev mode only, a `mailpit` (`axllent/mailpit`) if at least one service declares `needsSmtp`. No host port published besides the gateway's and Mailpit's web UI (`${MAILPIT_PORT:-8025}`).
