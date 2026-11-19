@@ -18,7 +18,7 @@ In a generated app, the generator clones each service into `services/{provider}/
 |---|---|---|---|
 | `provider` | string | yes | Declarative identifier for the contributor/maintainer, PascalCase. Must match the `Provider` segment of published events. |
 | `service` | string | yes | Short service name, lowercase, matching the second half of the catalog ref (`auth`, `messaging`). A compound name uses hyphens (`order-fulfillment`), only `a-z`, `0-9` and `-`, the same characters the catalog CI allows in a ref. Event names stay PascalCase: the `Service` segment is the `service` value with hyphens dropped, compared case-insensitively (`order-fulfillment` ↔ `Ostrun.OrderFulfillment.OrderShipped`), the same way `provider` is compared. |
-| `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). |
+| `version` | string | yes | Version of the service itself (semver, e.g. `1.0.0`). It must equal the service's git tag `v{version}`, see "Versioning and `rev`" below. |
 | `displayName` | string | yes | Human-readable name of the service. |
 | `description` | string | yes | Short description shown in the catalog. |
 | `basePath` | string | optional (default `/`) | Internal prefix under which the service mounts its routes (e.g. `/auth`). Without this field, the gateway assumes the service serves its routes at the root. If that's not the case, it strips the app prefix and breaks routing (`/auth/register` -> `/register` on the service side -> 404). |
@@ -34,6 +34,15 @@ In a generated app, the generator clones each service into `services/{provider}/
 | `healthCheck.method` | string | yes | HTTP method to use for the health check call (e.g. `GET`). |
 | `repository` | string (URL) | optional | Link to the service's Git repo, used by the generator to clone the source code (MVP "starter to tinker with" mode). |
 | `registry` | string (URL/image) | optional | Reference to an already-built Docker image, used for the "ready-to-use" mode (post-MVP). Lets the generator skip the clone and just reference the image in `docker-compose.yml`. |
+
+## Versioning and `rev`
+
+A service is published by tagging its repo. The catalog entry (and an `app.json` entry that gives a `repository`) says which revision to clone with `rev`:
+
+- `"rev": "latest"`: the generator runs `git ls-remote --tags` and clones the highest `vX.Y.Z` tag. Other tags, including pre-releases such as `v1.0.0-rc.1`, are ignored. If the repo has no `vX.Y.Z` tag, generation fails with an error instead of falling back to `main`.
+- Any other `rev` (a branch, a tag, e.g. `main` or `v1.2.0`) is accepted and used as-is.
+
+The tag must match the manifest: the annotated tag `vX.Y.Z` carries the same `version` as `ostrun.manifest.json` at that commit (`v1.2.0` ↔ `"version": "1.2.0"`). A release is a PR that bumps `version`, then the tag on the merged commit. See [`CONTRIBUTING.md`](../CONTRIBUTING.md#versioning-a-service). The generator doesn't check this match for you.
 
 ## Example: Auth service
 
