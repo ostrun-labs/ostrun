@@ -4,17 +4,17 @@
     {
       "ref": "ostrun/auth",
       "repository": "https://github.com/ostrun-labs/ostrun-auth-service",
-      "rev": "main"
+      "rev": "latest"
     },
     {
       "ref": "ostrun/messaging",
       "repository": "https://github.com/ostrun-labs/ostrun-messaging-service",
-      "rev": "main"
+      "rev": "latest"
     },
     {
       "ref": "ostrun/crawler",
       "repository": "https://github.com/ostrun-labs/ostrun-crawler-service",
-      "rev": "main"
+      "rev": "latest"
     }
   ]
 }
