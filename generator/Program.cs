@@ -201,7 +201,22 @@ static void ValidateCatalogEntry(
     Console.WriteLine($"Validating {entry.Ref} ({entry.Repository} @ {entry.Rev})...");
     try
     {
-        ServiceCloner.Clone(entry.Repository, entry.Rev, cloneDir);
+        // Validate at the rev the generator will use: "latest" becomes the highest vX.Y.Z tag.
+        string rev;
+        try
+        {
+            rev = ServiceCloner.ResolveRev(entry.Repository, entry.Rev);
+        }
+        catch (GenerationException ex)
+        {
+            throw new GenerationException($"{entry.Ref}: {ex.Message}");
+        }
+        if (rev != entry.Rev)
+        {
+            Console.WriteLine($"  {entry.Rev} -> {rev}");
+        }
+
+        ServiceCloner.Clone(entry.Repository, rev, cloneDir);
         var manifest = ManifestLoader.Load(Path.Combine(cloneDir, "ostrun.manifest.json"), entry.Ref);
 
         errors.AddRange(ManifestRules.Check(manifest, entry.Ref));
