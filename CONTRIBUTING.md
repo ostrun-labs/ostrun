@@ -52,6 +52,18 @@ MassTransit stays on 8.4.1 on purpose. The 8.5 EF Core integration requires EF C
 
 Libraries specific to one service (MailKit for the messaging service, for example) are up to that service.
 
+### Versioning a service
+
+Every catalogued service is versioned with plain git tags (no GitHub Releases). The catalog resolves `"rev": "latest"` to the highest tag, so tagging a service is what publishes it.
+
+- **Tag**: an annotated `vX.Y.Z` (`git tag -a v1.2.0 -m "v1.2.0"`), equal to the `version` in `ostrun.manifest.json`.
+- **Semver for a service**:
+  - **major**: a breaking change for consumers (a published event's shape changes, an env var is removed or renamed, a new env var becomes required);
+  - **minor**: a new capability (a new consumed or published event, a new optional env var, a new manifest field);
+  - **patch**: fixes and chores.
+- **Flow**: a PR bumps `version` in `ostrun.manifest.json`, then the tag goes on the merged commit. Nothing is committed straight to `main`.
+- **Definition of done**: merged into `main` means validated; included in a tag means done.
+
 ### Validate your service
 
 `ostrun validate` checks your `ostrun.manifest.json` and, with `--contracts`, the events it declares. From a clone of this repo:
